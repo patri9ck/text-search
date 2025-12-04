@@ -5,6 +5,7 @@
 #include <optional>
 #include <sstream>
 #include <vector>
+#include <chrono>
 
 std::optional<std::string> read_file(const std::string &path) {
     std::ifstream f(path, std::ios::binary);
@@ -101,15 +102,13 @@ int main(const int argc, char **argv) {
     const char *query = argv[2];
     const size_t query_len = strlen(query);
 
-    time_t t1;
-    time(&t1);
+    auto t1 = std::chrono::high_resolution_clock::now();
 
     find_candidates(&mask, &mask_words, text, text_len, query, query_len);
 
     const std::vector<size_t> results = test_candidates(mask, mask_words, text, query, query_len);
 
-    time_t t2;
-    time(&t2);
+    auto t2 = std::chrono::high_resolution_clock::now();
 
     std::cout << "Results: " << std::endl;
 
@@ -117,13 +116,14 @@ int main(const int argc, char **argv) {
         std::cout << result << std::endl;
     }
 
-    std::cout << difftime(t2, t1) << "s\n";
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+    std::cout << ms << " ms\n";
 
-    time(&t1);
+    t1 = std::chrono::high_resolution_clock::now();
 
     const std::vector<size_t> std_results = find_occurrences_std(std::string(text), std::string(query));
 
-    time(&t2);
+    t2 = std::chrono::high_resolution_clock::now();
 
     std::cout << "Standard library results: " << std::endl;
 
@@ -131,7 +131,8 @@ int main(const int argc, char **argv) {
         std::cout << result << std::endl;
     }
 
-    std::cout << difftime(t2, t1) << "s\n";
+    ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+    std::cout << ms << " ms\n";
 
     return 0;
 }
