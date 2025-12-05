@@ -6,7 +6,7 @@ std::vector<std::vector<int>> find_sequential_std(const std::string &text, const
     for (int i = 0; i < queries.size(); ++i) {
         indices[i] = std::vector<int>();
 
-        std::string query = queries[i];
+        const std::string& query = queries[i];
 
         size_t pos = text.find(query);
         while (pos != std::string::npos) {

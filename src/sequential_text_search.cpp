@@ -37,7 +37,7 @@ std::vector<std::vector<int>> find_sequential(const std::string &text, const std
     for (int i = 0; i < queries.size(); ++i) {
         indices[i] = std::vector<int>();
 
-        std::string query = queries[i];
+        const std::string& query = queries[i];
 
         uint64_t *mask;
         int mask_words;
