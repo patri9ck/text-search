@@ -1,5 +1,7 @@
 #include "cxxopts.hpp"
 #include "util.h"
+#include "sequential_text_search.h"
+#include "sequential_text_search_std.h"
 
 #include <iostream>
 #include <ranges>
@@ -38,6 +40,8 @@ int main(const int argc, char **argv) {
 
             if (content) {
                 texts[file] = *content;
+            } else {
+                std::cerr << "Warning: File couldn't be read: " << file << std::endl;
             }
         }
     }
@@ -62,4 +66,31 @@ int main(const int argc, char **argv) {
     for (const auto &file : texts | std::views::keys) {
         std::cout << file << std::endl;
     }
+
+    std::string impl = result["implementation"].as<std::string>();
+    std::cout << "searching with: " << impl;
+
+    std::vector<std::vector<int>> matches;
+
+    for (const auto& [filename, content] : texts) {
+        if (impl == "sequential") {
+            matches = find_sequential(content, queries);
+        } else if (impl == "std") {
+            matches = find_sequential_std(content, queries);
+        }
+
+        if (matches.size() != queries.size()) {
+            std::cerr << "Warning: unexpected result size for file " << filename << std::endl;
+            continue;
+        }
+
+        std::cout << "File: " << filename << std::endl;
+        for (size_t q = 0; q < queries.size(); ++q) {
+            std::cout << "  Query: " << queries[q] << "\n";
+            for (auto pos : matches[q]) {
+                std::cout << "    Found at position: " << pos << "\n";
+            }
+        }
+    }
+
 }

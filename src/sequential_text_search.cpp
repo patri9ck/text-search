@@ -35,7 +35,7 @@ std::vector<std::vector<int>> find_sequential(const std::string &text, const std
     std::vector<std::vector<int>> indices;
 
     for (int i = 0; i < queries.size(); ++i) {
-        indices[i] = std::vector<int>();
+        indices.emplace_back();
 
         const std::string& query = queries[i];
 
