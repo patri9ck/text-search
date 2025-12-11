@@ -5,17 +5,17 @@ Es macht vielleicht Sinn eine Klasse zu implementieren, welche Informationen üb
 Zum Beispiel wird bei der Ausführung der main() function gespeichert welche Suche lief (bspw: Standard lib find()) welcher String gesucht wurde, welche Zeit und so weiter.
 Idealerweise kann man später das ganze sogar mit python plotten.
 
-#OpenMP
+# OpenMP
 verschiedene Threads
 
-#OpenMPI
+# OpenMPI
 verschiedene Prozess
 
-#Hybrid-Modells
-Aufteilen der auf prozesse welche mit mehreren Threads arebeiten
-
-#OpenCL 
+# OpenCL 
 eufteilen auf GPU threads
+
+# Hybrid-Modells (zusatz)
+Aufteilen der auf prozesse welche mit mehreren Threads arebeiten
 
 # Weitere text-search ansätze
 ## Hashing (max)
