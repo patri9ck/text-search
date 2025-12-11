@@ -2,6 +2,7 @@
 #include "sequential/sequential_text_search.h"
 #include "std/std_text_search.h"
 #include "util.h"
+#include "sequential_text_search_hash.h"
 
 #include <iostream>
 #include <ranges>
@@ -66,7 +67,7 @@ int main(const int argc, char **argv) {
     }
 
     std::string impl = result["implementation"].as<std::string>();
-    std::cout << "searching with: " << impl;
+    std::cout << "searching with: " << impl << std::endl;
 
     std::vector<std::vector<int>> matches;
 
@@ -75,6 +76,8 @@ int main(const int argc, char **argv) {
             matches = find_sequential(content, queries);
         } else if (impl == "std") {
             matches = find_std(content, queries);
+        } else if (impl == "hash") {
+            matches = find_sequential_hash(content, queries);
         }
 
         if (matches.size() != queries.size()) {
