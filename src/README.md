@@ -4,8 +4,10 @@
    In this implementation, we use a fixed prime number: `131`.
 
 2. **Calculate Query Hash**  
-   To compute the `query_hash`, each character of the query is multiplied by powers of the prime number:  
-   `query_hash = query[0]*prime^(m-1) + query[1]*prime^(m-2) + ... + query[m-1]`
+   To compute the `query_hash`, each character of the query is multiplied by powers of the prime number:
+```
+    query_hash = query[0]*prime^(m-1) + query[1]*prime^(m-2) + ... + query[m-1]
+```
 This represents the query as a number in base `prime`.
 
 3. **Compute Power for Rolling Hash**  
