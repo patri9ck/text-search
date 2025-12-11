@@ -3,6 +3,10 @@
 #include <cstdint>
 #include <cstring>
 
+#ifdef BENCHMARK
+#include "sequential_text_search_benchmark.h"
+#endif
+
 void find_candidates(uint64_t **mask, int *mask_words, const std::string &text, const std::string &query) {
     const int text_length = text.length();
     const int query_length = query.length();
@@ -42,10 +46,22 @@ std::vector<std::vector<int>> find_sequential(const std::string &text, const std
         uint64_t *mask;
         int mask_words;
 
+        #ifdef BENCHMARK
+        sequential_timer.start_sequential_part(0, "find candidates");
+        #endif
+
         find_candidates(&mask, &mask_words, text, query);
+
+        #ifdef BENCHMARK
+        sequential_timer.stop_sequential_part(0);
+        #endif
 
         for (int word = 0; word < mask_words; ++word) {
             uint64_t w = mask[word];
+
+            #ifdef BENCHMARK
+            sequential_timer.start_sequential_part(1, "test candidates");
+            #endif
 
             while (w != 0) {
                 int index = word * 64 + __builtin_ctzll(w);
@@ -56,6 +72,10 @@ std::vector<std::vector<int>> find_sequential(const std::string &text, const std
 
                 w &= (w - 1);
             }
+
+            #ifdef BENCHMARK
+            sequential_timer.stop_sequential_part(1);
+            #endif
         }
     }
 

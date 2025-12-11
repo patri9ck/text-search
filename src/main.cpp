@@ -1,7 +1,7 @@
 #include "cxxopts.hpp"
+#include "sequential/sequential_text_search.h"
+#include "std/std_text_search.h"
 #include "util.h"
-#include "sequential_text_search.h"
-#include "sequential_text_search_std.h"
 
 #include <iostream>
 #include <ranges>
@@ -40,8 +40,6 @@ int main(const int argc, char **argv) {
 
             if (content) {
                 texts[file] = *content;
-            } else {
-                std::cerr << "Warning: File couldn't be read: " << file << std::endl;
             }
         }
     }
@@ -76,7 +74,7 @@ int main(const int argc, char **argv) {
         if (impl == "sequential") {
             matches = find_sequential(content, queries);
         } else if (impl == "std") {
-            matches = find_sequential_std(content, queries);
+            matches = find_std(content, queries);
         }
 
         if (matches.size() != queries.size()) {
