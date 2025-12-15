@@ -34,14 +34,19 @@ void Timer::stop_parallel_part(int index) {
 }
 
 long Timer::get_total_time() const {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(total_end - total_start).count();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(total_end -
+                                                                 total_start)
+        .count();
 }
 
 std::map<int, long> Timer::get_sequential_parts() const {
     std::map<int, long> results;
 
-    for (const auto& [index, part] : sequential_parts) {
-        results.emplace(index, std::chrono::duration_cast<std::chrono::milliseconds>(part.end - part.start).count());
+    for (const auto &[index, part] : sequential_parts) {
+        results.emplace(index,
+                        std::chrono::duration_cast<std::chrono::milliseconds>(
+                            part.end - part.start)
+                            .count());
     }
 
     return results;
@@ -50,8 +55,11 @@ std::map<int, long> Timer::get_sequential_parts() const {
 std::map<int, long> Timer::get_parallel_parts() const {
     std::map<int, long> results;
 
-    for (const auto& [index, part] : parallel_parts) {
-        results.emplace(index, std::chrono::duration_cast<std::chrono::milliseconds>(part.end - part.start).count());
+    for (const auto &[index, part] : parallel_parts) {
+        results.emplace(index,
+                        std::chrono::duration_cast<std::chrono::milliseconds>(
+                            part.end - part.start)
+                            .count());
     }
 
     return results;
@@ -63,28 +71,36 @@ void Timer::print() const {
     }
 
     if (!sequential_parts.empty()) {
-        for (const auto& [index, part] : sequential_parts) {
+        for (const auto &[index, part] : sequential_parts) {
             std::cout << "SEQ " << index;
 
             if (!part.label.empty()) {
                 std::cout << " " << part.label;
             }
 
-            std::cout << ": " << std::chrono::duration_cast<std::chrono::milliseconds>(part.end - part.start).count() << std::endl;
+            std::cout << ": "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(
+                             part.end - part.start)
+                             .count()
+                      << std::endl;
         }
 
         std::cout << std::endl;
     }
 
     if (!parallel_parts.empty()) {
-        for (const auto& [index, part] : parallel_parts) {
+        for (const auto &[index, part] : parallel_parts) {
             std::cout << "PAR " << index;
 
             if (!part.label.empty()) {
                 std::cout << " " << part.label;
             }
 
-            std::cout << ": " << std::chrono::duration_cast<std::chrono::milliseconds>(part.end - part.start).count() << std::endl;
+            std::cout << ": "
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(
+                             part.end - part.start)
+                             .count()
+                      << std::endl;
         }
 
         std::cout << std::endl;
@@ -92,5 +108,3 @@ void Timer::print() const {
 
     std::cout << "TOT: " << get_total_time() << std::endl;
 }
-
-

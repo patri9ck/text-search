@@ -4,10 +4,11 @@
 #include <cstring>
 
 #ifdef BENCHMARK
-#include "sequential_text_search_benchmark.h"
+    #include "sequential_text_search_benchmark.h"
 #endif
 
-void find_candidates(uint64_t **mask, int *mask_words, const std::string &text, const std::string &query) {
+void find_candidates(uint64_t **mask, int *mask_words, const std::string &text,
+                     const std::string &query) {
     const int text_length = text.length();
     const int query_length = query.length();
 
@@ -22,7 +23,8 @@ void find_candidates(uint64_t **mask, int *mask_words, const std::string &text, 
     }
 }
 
-bool test_candidate(const int index, const std::string &text, const std::string &query) {
+bool test_candidate(const int index, const std::string &text,
+                    const std::string &query) {
     const int query_length = query.length();
 
     for (size_t i = 0; i < query_length; ++i) {
@@ -34,34 +36,35 @@ bool test_candidate(const int index, const std::string &text, const std::string 
     return true;
 }
 
-
-std::vector<std::vector<int>> find_sequential(const std::string &text, const std::vector<std::string> &queries) {
+std::vector<std::vector<int>>
+find_sequential(const std::string &text,
+                const std::vector<std::string> &queries) {
     std::vector<std::vector<int>> indices;
 
     for (int i = 0; i < queries.size(); ++i) {
         indices.emplace_back();
 
-        const std::string& query = queries[i];
+        const std::string &query = queries[i];
 
         uint64_t *mask;
         int mask_words;
 
-        #ifdef BENCHMARK
+#ifdef BENCHMARK
         sequential_timer.start_sequential_part(0, "find candidates");
-        #endif
+#endif
 
         find_candidates(&mask, &mask_words, text, query);
 
-        #ifdef BENCHMARK
+#ifdef BENCHMARK
         sequential_timer.stop_sequential_part(0);
-        #endif
+#endif
 
         for (int word = 0; word < mask_words; ++word) {
             uint64_t w = mask[word];
 
-            #ifdef BENCHMARK
+#ifdef BENCHMARK
             sequential_timer.start_sequential_part(1, "test candidates");
-            #endif
+#endif
 
             while (w != 0) {
                 int index = word * 64 + __builtin_ctzll(w);
@@ -73,9 +76,9 @@ std::vector<std::vector<int>> find_sequential(const std::string &text, const std
                 w &= (w - 1);
             }
 
-            #ifdef BENCHMARK
+#ifdef BENCHMARK
             sequential_timer.stop_sequential_part(1);
-            #endif
+#endif
         }
     }
 

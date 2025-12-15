@@ -5,9 +5,11 @@
 
 2. **Calculate Query Hash**  
    To compute the `query_hash`, each character of the query is multiplied by powers of the prime number:
+
 ```
     query_hash = query[0]*prime^(m-1) + query[1]*prime^(m-2) + ... + query[m-1]
 ```
+
 This represents the query as a number in base `prime`.
 
 3. **Compute Power for Rolling Hash**  
@@ -19,6 +21,7 @@ This represents the query as a number in base `prime`.
 
 5. **Rolling Hash Across the Rest of the Text**  
    For each subsequent position:
+
 - Remove the leftmost character:
   ```
   window_hash -= text[i-1] * power
@@ -33,4 +36,5 @@ This represents the query as a number in base `prime`.
   ```
 
 6. **Check for Hash Matches**  
-   If the rolling hash matches `query_hash`, optionally perform a character-by-character comparison to confirm the match.
+   If the rolling hash matches `query_hash`, optionally perform a character-by-character comparison to confirm the
+   match.

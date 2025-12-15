@@ -5,6 +5,7 @@
 
 extern Timer sequential_timer;
 
-void benchmark_sequential(const std::string &text, const std::vector<std::string> &queries);
+void benchmark_sequential(const std::string &text,
+                          const std::vector<std::string> &queries);
 
 #endif

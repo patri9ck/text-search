@@ -6,7 +6,8 @@
 
 Timer sequential_timer = Timer(std::string("sequential"));
 
-void benchmark_sequential(const std::string &text, const std::vector<std::string> &queries) {
+void benchmark_sequential(const std::string &text,
+                          const std::vector<std::string> &queries) {
     sequential_timer.start_total();
 
     find_sequential(text, queries);
@@ -15,4 +16,3 @@ void benchmark_sequential(const std::string &text, const std::vector<std::string
 
     std::cout << "Finished sequential text search." << std::endl;
 }
-

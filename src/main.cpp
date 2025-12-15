@@ -1,8 +1,8 @@
 #include "cxxopts.hpp"
+#include "hash/hash_text_search.h"
 #include "sequential/sequential_text_search.h"
 #include "std/std_text_search.h"
 #include "util.h"
-#include "sequential_text_search_hash.h"
 
 #include <iostream>
 #include <ranges>
@@ -10,12 +10,15 @@
 int main(const int argc, char **argv) {
     cxxopts::Options options("text-search", "Search for words in big texts");
 
-    options.add_options()
-        ("i,implementation", "implementation: sequential, std, parallel", cxxopts::value<std::string>()->default_value("sequential"))
-        ("f,file", "files to search in", cxxopts::value<std::vector<std::string>>())
-        ("d,directory", "directories to search in", cxxopts::value<std::vector<std::string>>())
-        ("q,query", "queries", cxxopts::value<std::vector<std::string>>())
-        ("h,help", "Print help");
+    options.add_options()(
+        "i,implementation", "implementation: sequential, std, parallel",
+        cxxopts::value<std::string>()->default_value("sequential"))(
+        "f,file", "files to search in",
+        cxxopts::value<std::vector<std::string>>())(
+        "d,directory", "directories to search in",
+        cxxopts::value<std::vector<std::string>>())(
+        "q,query", "queries",
+        cxxopts::value<std::vector<std::string>>())("h,help", "Print help");
 
     const auto result = options.parse(argc, argv);
 
@@ -71,17 +74,18 @@ int main(const int argc, char **argv) {
 
     std::vector<std::vector<int>> matches;
 
-    for (const auto& [filename, content] : texts) {
+    for (const auto &[filename, content] : texts) {
         if (impl == "sequential") {
             matches = find_sequential(content, queries);
         } else if (impl == "std") {
             matches = find_std(content, queries);
         } else if (impl == "hash") {
-            matches = find_sequential_hash(content, queries);
+            matches = find_hash(content, queries);
         }
 
         if (matches.size() != queries.size()) {
-            std::cerr << "Warning: unexpected result size for file " << filename << std::endl;
+            std::cerr << "Warning: unexpected result size for file " << filename
+                      << std::endl;
             continue;
         }
 
@@ -93,5 +97,4 @@ int main(const int argc, char **argv) {
             }
         }
     }
-
 }

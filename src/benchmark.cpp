@@ -1,4 +1,5 @@
 #include "cxxopts.hpp"
+#include "hash/hash_text_search_benchmark.h"
 #include "sequential/sequential_text_search_benchmark.h"
 #include "std/std_text_search_benchmark.h"
 #include "util.h"
@@ -6,11 +7,13 @@
 #include <iostream>
 
 int main(const int argc, char **argv) {
-    cxxopts::Options options("text-search-benchmark", "Search for words in big texts and benchmark it");
+    cxxopts::Options options("text-search-benchmark",
+                             "Search for words in big texts and benchmark it");
 
-    options.add_options()
-        ("q,query", "queries", cxxopts::value<std::vector<std::string>>())
-        ("d,directory", "directories to search in", cxxopts::value<std::vector<std::string>>());
+    options.add_options()("q,query", "queries",
+                          cxxopts::value<std::vector<std::string>>())(
+        "d,directory", "directories to search in",
+        cxxopts::value<std::vector<std::string>>());
 
     const auto result = options.parse(argc, argv);
 
@@ -43,14 +46,16 @@ int main(const int argc, char **argv) {
 
     std::string total;
 
-    for (const auto& text : texts) {
+    for (const auto &text : texts) {
         total += text;
     }
 
-    std::cout << "Assembled all texts to one of size " << total.length() << std::endl;
+    std::cout << "Assembled all texts to one of size " << total.length()
+              << std::endl;
 
     benchmark_sequential(total, queries);
     benchmark_std(total, queries);
+    benchmark_hash(total, queries);
 
     sequential_timer.print();
     std_timer.print();

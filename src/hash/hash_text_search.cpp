@@ -1,8 +1,8 @@
-#include "sequential_text_search_hash.h"
+#include "hash_text_search.h"
 
+#include <cstdint>
 #include <string>
 #include <vector>
-#include <cstdint>
 
 uint64_t compute_power(uint64_t prime, int length) {
     uint64_t p = 1;
@@ -12,13 +12,14 @@ uint64_t compute_power(uint64_t prime, int length) {
     return p;
 }
 
-std::vector<std::vector<int>> find_sequential_hash(const std::string &text, const std::vector<std::string> &queries) {
+std::vector<std::vector<int>>
+find_hash(const std::string &text, const std::vector<std::string> &queries) {
     std::vector<std::vector<int>> indices;
     int text_length = text.length();
 
     const uint64_t prime = 131;
 
-    for (const auto& query : queries) {
+    for (const auto &query : queries) {
         std::vector<int> query_indices;
         int m = query.length();
 

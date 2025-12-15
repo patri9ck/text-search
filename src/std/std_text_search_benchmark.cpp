@@ -7,7 +7,8 @@
 
 Timer std_timer = Timer(std::string("std"));
 
-void benchmark_std(const std::string &text, const std::vector<std::string> &queries) {
+void benchmark_std(const std::string &text,
+                   const std::vector<std::string> &queries) {
     std_timer.start_total();
 
     find_std(text, queries);

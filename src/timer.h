@@ -22,11 +22,13 @@ class Timer {
         std::map<int, long> get_parallel_parts() const;
 
         void print() const;
+
     private:
         struct Part {
-            std::string label;
-            std::chrono::time_point<std::chrono::high_resolution_clock> start;
-            std::chrono::time_point<std::chrono::high_resolution_clock> end;
+                std::string label;
+                std::chrono::time_point<std::chrono::high_resolution_clock>
+                    start;
+                std::chrono::time_point<std::chrono::high_resolution_clock> end;
         };
 
         const std::string name;
