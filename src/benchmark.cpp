@@ -59,4 +59,5 @@ int main(const int argc, char **argv) {
 
     sequential_timer.print();
     std_timer.print();
+    hash_timer.print();
 }
