@@ -1,4 +1,4 @@
-#include "sequential_text_search.h"
+#include "candidate_text_search.h"
 
 #include <cstdint>
 #include <cstring>
@@ -37,8 +37,8 @@ bool test_candidate(const int index, const std::string &text,
 }
 
 std::vector<std::vector<int>>
-find_sequential(const std::string &text,
-                const std::vector<std::string> &queries) {
+find_candidate(const std::string &text,
+               const std::vector<std::string> &queries) {
     std::vector<std::vector<int>> indices;
 
     for (int i = 0; i < queries.size(); ++i) {

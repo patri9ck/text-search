@@ -1,6 +1,6 @@
+#include "candidate/candidate_text_search.h"
 #include "cxxopts.hpp"
 #include "hash/hash_text_search.h"
-#include "sequential/sequential_text_search.h"
 #include "std/std_text_search.h"
 #include "util.h"
 
@@ -10,7 +10,7 @@ int main(const int argc, char **argv) {
     cxxopts::Options options("text-search", "Search for words in big texts");
 
     options.add_options()(
-        "i,implementation", "implementation: sequential, std, hash",
+        "i,implementation", "implementation: candidate, std, hash",
         cxxopts::value<std::string>()->default_value("sequential"))(
         "f,file", "files to search in",
         cxxopts::value<std::vector<std::string>>())(
@@ -33,10 +33,11 @@ int main(const int argc, char **argv) {
 
     std::string implementation = result["implementation"].as<std::string>();
 
-    std::vector<std::vector<int>> (*find)(const std::string &, const std::vector<std::string> &);
+    std::vector<std::vector<int>> (*find)(const std::string &,
+                                          const std::vector<std::string> &);
 
-    if (implementation == "sequential") {
-        find = find_sequential;
+    if (implementation == "candidate") {
+        find = find_candidate;
     } else if (implementation == "hash") {
         find = find_hash;
     } else if (implementation == "std") {
@@ -86,12 +87,14 @@ int main(const int argc, char **argv) {
         total += text;
     }
 
-    std::cout << "Searching with " << implementation << " through an assembled text of size " << total.length() << "." << std::endl;
+    std::cout << "Searching with " << implementation
+              << " through an assembled text of size " << total.length() << "."
+              << std::endl;
 
     auto matches = find(total, queries);
 
     for (int i = 0; i < queries.size(); ++i) {
-        const auto& query = queries[i];
+        const auto &query = queries[i];
 
         std::cout << "Query " << query << ":" << std::endl;
 

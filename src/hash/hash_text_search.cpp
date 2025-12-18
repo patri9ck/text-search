@@ -12,7 +12,8 @@ uint64_t compute_power(uint64_t prime, int length) {
     return p;
 }
 
-std::vector<std::vector<int>> find_hash(const std::string &text, const std::vector<std::string> &queries) {
+std::vector<std::vector<int>>
+find_hash(const std::string &text, const std::vector<std::string> &queries) {
     std::vector<std::vector<int>> indices;
     int text_length = text.length();
 
@@ -21,14 +22,12 @@ std::vector<std::vector<int>> find_hash(const std::string &text, const std::vect
     for (const auto &query : queries) {
         std::vector<int> query_indices;
 
+        indices.push_back(query_indices);
+
         int m = query.length();
 
-        if (m > text_length) {
-            indices.push_back(query_indices);
-            continue;
-        }
-
         uint64_t query_hash = 0;
+
         for (int i = 0; i < m; ++i) {
             query_hash = query_hash * prime + query[i];
         }

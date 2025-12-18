@@ -1,6 +1,6 @@
+#include "candidate/candidate_text_search_benchmark.h"
 #include "cxxopts.hpp"
 #include "hash/hash_text_search_benchmark.h"
-#include "sequential/sequential_text_search_benchmark.h"
 #include "std/std_text_search_benchmark.h"
 #include "util.h"
 
@@ -53,7 +53,7 @@ int main(const int argc, char **argv) {
     std::cout << "Assembled all texts to one of size " << total.length()
               << std::endl;
 
-    benchmark_sequential(total, queries);
+    benchmark_candidate(total, queries);
     benchmark_std(total, queries);
     benchmark_hash(total, queries);
 

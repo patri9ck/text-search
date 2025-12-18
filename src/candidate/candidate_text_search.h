@@ -7,7 +7,7 @@
 #include "../timer.h"
 
 std::vector<std::vector<int>>
-find_sequential(const std::string &text,
-                const std::vector<std::string> &queries);
+find_candidate(const std::string &text,
+               const std::vector<std::string> &queries);
 
 #endif
