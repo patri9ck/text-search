@@ -75,8 +75,6 @@ std::vector<std::vector<int>> find_hash(const std::string &text, const std::vect
                 if (match) {
                     query_indices.push_back(i);
                 }
-
-
             }
         }
 

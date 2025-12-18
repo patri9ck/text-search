@@ -16,7 +16,12 @@ add_executable(text-search-benchmark
         src/std/std_text_search.cpp src/std/std_text_search_benchmark.cpp
         src/hash/hash_text_search.cpp src/hash/hash_text_search_benchmark.cpp)
 
+find_package(OpenCL REQUIRED)
+
 target_include_directories(text-search PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(text-search-benchmark PRIVATE ${PROJECT_SOURCE_DIR}/include)
+
+target_link_libraries(text-search OpenCL::OpenCL)
+target_link_libraries(text-search-benchmark OpenCL::OpenCL)
 
 target_compile_definitions(text-search-benchmark PRIVATE BENCHMARK)
