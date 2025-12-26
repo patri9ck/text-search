@@ -5,7 +5,7 @@
 
 extern Timer std_timer;
 
-void benchmark_std(const std::string &text,
-                   const std::vector<std::string> &queries);
+std::vector<std::vector<int>>
+benchmark_std(const std::string &text, const std::vector<std::string> &queries);
 
 #endif // STD_TEXT_SEARCH_BENCHMARK_H

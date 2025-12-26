@@ -8,8 +8,8 @@ add_executable(text-search src/main.cpp
         src/std/std_text_search.cpp
         src/hash/hash_text_search.cpp
         src/util.cpp)
-add_executable(text-search-benchmark
-        src/benchmark.cpp
+add_executable(text-search-test
+        src/test.cpp
         src/timer.cpp
         src/util.cpp
         src/candidate/candidate_text_search.cpp src/candidate/candidate_text_search_benchmark.cpp
@@ -17,11 +17,17 @@ add_executable(text-search-benchmark
         src/hash/hash_text_search.cpp src/hash/hash_text_search_benchmark.cpp)
 
 find_package(OpenCL REQUIRED)
+find_package(OpenMP REQUIRED)
+find_package(MPI REQUIRED)
 
 target_include_directories(text-search PRIVATE ${PROJECT_SOURCE_DIR}/include)
-target_include_directories(text-search-benchmark PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(text-search-test PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 target_link_libraries(text-search OpenCL::OpenCL)
-target_link_libraries(text-search-benchmark OpenCL::OpenCL)
+target_link_libraries(text-search OpenMP::OpenMP_CXX)
+target_link_libraries(text-search MPI::MPI_CXX)
+target_link_libraries(text-search-test OpenCL::OpenCL)
+target_link_libraries(text-search-test OpenMP::OpenMP_CXX)
+target_link_libraries(text-search-test MPI::MPI_CXX)
 
-target_compile_definitions(text-search-benchmark PRIVATE BENCHMARK)
+target_compile_definitions(text-search-test PRIVATE BENCHMARK)

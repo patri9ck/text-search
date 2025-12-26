@@ -11,7 +11,7 @@ int main(const int argc, char **argv) {
 
     options.add_options()(
         "i,implementation", "implementation: candidate, std, hash",
-        cxxopts::value<std::string>()->default_value("sequential"))(
+        cxxopts::value<std::string>()->default_value("candidate"))(
         "f,file", "files to search in",
         cxxopts::value<std::vector<std::string>>())(
         "d,directory", "directories to search in",

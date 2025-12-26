@@ -84,8 +84,6 @@ void Timer::print() const {
                              .count()
                       << std::endl;
         }
-
-        std::cout << std::endl;
     }
 
     if (!parallel_parts.empty()) {
@@ -102,8 +100,6 @@ void Timer::print() const {
                              .count()
                       << std::endl;
         }
-
-        std::cout << std::endl;
     }
 
     std::cout << "TOT: " << get_total_time() << std::endl;

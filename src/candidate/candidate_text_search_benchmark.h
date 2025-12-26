@@ -3,9 +3,10 @@
 
 #include "../timer.h"
 
-extern Timer sequential_timer;
+extern Timer candidate_timer;
 
-void benchmark_candidate(const std::string &text,
-                         const std::vector<std::string> &queries);
+std::vector<std::vector<int>>
+benchmark_candidate(const std::string &text,
+                    const std::vector<std::string> &queries);
 
 #endif

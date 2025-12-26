@@ -5,7 +5,8 @@
 
 extern Timer hash_timer;
 
-void benchmark_hash(const std::string &text,
-                    const std::vector<std::string> &queries);
+std::vector<std::vector<int>>
+benchmark_hash(const std::string &text,
+               const std::vector<std::string> &queries);
 
 #endif // HASH_TEXT_SEARCH_BENCHMARK_H

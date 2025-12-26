@@ -4,7 +4,7 @@
 #include <cstring>
 
 #ifdef BENCHMARK
-    #include "sequential_text_search_benchmark.h"
+    #include "candidate_text_search_benchmark.h"
 #endif
 
 void find_candidates(uint64_t **mask, int *mask_words, const std::string &text,
@@ -50,20 +50,20 @@ find_candidate(const std::string &text,
         int mask_words;
 
 #ifdef BENCHMARK
-        sequential_timer.start_sequential_part(0, "find candidates");
+        candidate_timer.start_sequential_part(0, "find candidates");
 #endif
 
         find_candidates(&mask, &mask_words, text, query);
 
 #ifdef BENCHMARK
-        sequential_timer.stop_sequential_part(0);
+        candidate_timer.stop_sequential_part(0);
 #endif
 
         for (int word = 0; word < mask_words; ++word) {
             uint64_t w = mask[word];
 
 #ifdef BENCHMARK
-            sequential_timer.start_sequential_part(1, "test candidates");
+            candidate_timer.start_sequential_part(1, "test candidates");
 #endif
 
             while (w != 0) {
@@ -77,7 +77,7 @@ find_candidate(const std::string &text,
             }
 
 #ifdef BENCHMARK
-            sequential_timer.stop_sequential_part(1);
+            candidate_timer.stop_sequential_part(1);
 #endif
         }
     }

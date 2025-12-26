@@ -22,8 +22,6 @@ find_hash(const std::string &text, const std::vector<std::string> &queries) {
     for (const auto &query : queries) {
         std::vector<int> query_indices;
 
-        indices.push_back(query_indices);
-
         int m = query.length();
 
         uint64_t query_hash = 0;

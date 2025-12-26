@@ -6,13 +6,18 @@
 
 Timer hash_timer = Timer(std::string("hash"));
 
-void benchmark_hash(const std::string &text,
-                    const std::vector<std::string> &queries) {
+std::vector<std::vector<int>>
+benchmark_hash(const std::string &text,
+               const std::vector<std::string> &queries) {
     hash_timer.start_total();
 
-    find_hash(text, queries);
+    auto results = find_hash(text, queries);
 
     hash_timer.stop_total();
 
     std::cout << "Finished hash text search." << std::endl;
+
+    hash_timer.print();
+
+    return results;
 }
