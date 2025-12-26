@@ -12,9 +12,15 @@ void find_candidates(uint64_t **mask, int *mask_words, const std::string &text,
     const int text_length = text.length();
     const int query_length = query.length();
 
+#ifdef BENCHMARK
+    candidate_timer.start_sequential_part(2, "allocate bitmask");
+#endif
     *mask_words = (text_length + 63) / 64;
     *mask = new uint64_t[*mask_words];
     std::memset(*mask, 0, *mask_words * sizeof(uint64_t));
+#ifdef BENCHMARK
+    candidate_timer.stop_sequential_part(2);
+#endif
 
     for (int i = 0; i <= text_length - query_length; ++i) {
         if (text[i] == query[0]) {
