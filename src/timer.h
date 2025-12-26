@@ -28,13 +28,13 @@ class Timer {
                 std::string label;
                 std::chrono::time_point<std::chrono::high_resolution_clock>
                     start;
-                std::chrono::time_point<std::chrono::high_resolution_clock> end;
+                long duration;
         };
 
         const std::string name;
 
         std::chrono::time_point<std::chrono::high_resolution_clock> total_start;
-        std::chrono::time_point<std::chrono::high_resolution_clock> total_end;
+        long total_duration;
 
         std::map<int, Part> sequential_parts;
         std::map<int, Part> parallel_parts;

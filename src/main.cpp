@@ -1,4 +1,4 @@
-#include "candidate/candidate_text_search.h"
+#include "candidate_v3/candidate_v3_text_search.h"
 #include "cxxopts.hpp"
 #include "hash/hash_text_search.h"
 #include "std/std_text_search.h"
@@ -37,7 +37,7 @@ int main(const int argc, char **argv) {
                                           const std::vector<std::string> &);
 
     if (implementation == "candidate") {
-        find = find_candidate;
+        find = find_candidate_v3;
     } else if (implementation == "hash") {
         find = find_hash;
     } else if (implementation == "std") {

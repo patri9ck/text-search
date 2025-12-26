@@ -1,25 +1,26 @@
-#include "candidate_text_search.h"
+#include "candidate_v3_text_search.h"
 
 #include <cstdint>
 #include <cstring>
 
 #ifdef BENCHMARK
-    #include "candidate_text_search_benchmark.h"
+    #include "candidate_v3_text_search_benchmark.h"
 #endif
 
+namespace {
 void find_candidates(uint64_t **mask, int *mask_words, const std::string &text,
                      const std::string &query) {
     const int text_length = text.length();
     const int query_length = query.length();
 
 #ifdef BENCHMARK
-    candidate_timer.start_sequential_part(2, "allocate bitmask");
+    candidate_v3_timer.start_sequential_part(0, "allocate bitmask");
 #endif
     *mask_words = (text_length + 63) / 64;
     *mask = new uint64_t[*mask_words];
     std::memset(*mask, 0, *mask_words * sizeof(uint64_t));
 #ifdef BENCHMARK
-    candidate_timer.stop_sequential_part(2);
+    candidate_v3_timer.stop_sequential_part(0);
 #endif
 
     for (int i = 0; i <= text_length - query_length; ++i) {
@@ -41,10 +42,11 @@ bool test_candidate(const int index, const std::string &text,
 
     return true;
 }
+} // namespace
 
 std::vector<std::vector<int>>
-find_candidate(const std::string &text,
-               const std::vector<std::string> &queries) {
+find_candidate_v3(const std::string &text,
+                  const std::vector<std::string> &queries) {
     std::vector<std::vector<int>> indices;
 
     for (int i = 0; i < queries.size(); ++i) {
@@ -56,20 +58,20 @@ find_candidate(const std::string &text,
         int mask_words;
 
 #ifdef BENCHMARK
-        candidate_timer.start_sequential_part(0, "find candidates");
+        candidate_v3_timer.start_sequential_part(1, "find candidates");
 #endif
 
         find_candidates(&mask, &mask_words, text, query);
 
 #ifdef BENCHMARK
-        candidate_timer.stop_sequential_part(0);
+        candidate_v3_timer.stop_sequential_part(1);
 #endif
 
         for (int word = 0; word < mask_words; ++word) {
             uint64_t w = mask[word];
 
 #ifdef BENCHMARK
-            candidate_timer.start_sequential_part(1, "test candidates");
+            candidate_v3_timer.start_sequential_part(2, "test candidates");
 #endif
 
             while (w != 0) {
@@ -83,9 +85,11 @@ find_candidate(const std::string &text,
             }
 
 #ifdef BENCHMARK
-            candidate_timer.stop_sequential_part(1);
+            candidate_v3_timer.stop_sequential_part(2);
 #endif
         }
+
+        delete[] mask;
     }
 
     return indices;

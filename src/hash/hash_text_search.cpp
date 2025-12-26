@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+namespace {
 uint64_t compute_power(uint64_t prime, int length) {
     uint64_t p = 1;
     for (int i = 1; i < length; ++i) {
@@ -11,6 +12,8 @@ uint64_t compute_power(uint64_t prime, int length) {
     }
     return p;
 }
+
+} // namespace
 
 std::vector<std::vector<int>>
 find_hash(const std::string &text, const std::vector<std::string> &queries) {
