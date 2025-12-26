@@ -1,6 +1,9 @@
+#include "candidate_openmp_v1/candidate_openmp_v1_text_search_benchmark.h"
+#include "candidate_openmp_v2/candidate_openmp_v2_text_search_benchmark.h"
 #include "candidate_v1/candidate_v1_text_search_benchmark.h"
 #include "candidate_v2/candidate_v2_text_search_benchmark.h"
 #include "candidate_v3/candidate_v3_text_search_benchmark.h"
+#include "candidate_v4/candidate_v4_text_search_benchmark.h"
 #include "cxxopts.hpp"
 #include "hash/hash_text_search_benchmark.h"
 #include "std/std_text_search_benchmark.h"
@@ -121,10 +124,16 @@ int main(const int argc, char **argv) {
     auto candidate_v1_results = benchmark_candidate_v1(total, queries);
     auto candidate_v2_results = benchmark_candidate_v2(total, queries);
     auto candidate_v3_results = benchmark_candidate_v3(total, queries);
+    auto candidate_v4_results = benchmark_candidate_v4(total, queries);
+    auto candidate_openmp_v1_results = benchmark_candidate_openmp_v1(total, queries);
+    auto candidate_openmp_v2_results = benchmark_candidate_openmp_v2(total, queries);
     auto hash_results = benchmark_hash(total, queries);
 
     compare_results(std_results, candidate_v1_results, queries, "candidate_v1");
     compare_results(std_results, candidate_v2_results, queries, "candidate_v2");
     compare_results(std_results, candidate_v3_results, queries, "candidate_v3");
+    compare_results(std_results, candidate_v4_results, queries, "candidate_v4");
+    compare_results(std_results, candidate_openmp_v1_results, queries, "candidate_openmp_v1");
+    compare_results(std_results, candidate_openmp_v2_results, queries, "candidate_openmp_v2");
     compare_results(std_results, hash_results, queries, "hash");
 }
