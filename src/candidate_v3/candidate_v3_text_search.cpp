@@ -8,22 +8,21 @@
 #endif
 
 namespace {
-void find_candidates(uint64_t **mask, int *mask_words, const std::string &text,
-                     const std::string &query) {
-    const int text_length = text.length();
-    const int query_length = query.length();
+void find_candidates(uint64_t **mask, unsigned long *mask_words,
+                     const std::string &text, const std::string &query) {
+    const auto text_length = text.length();
+    const auto query_length = query.length();
 
 #ifdef BENCHMARK
     candidate_v3_timer.start_sequential_part(0, "allocate bitmask");
 #endif
     *mask_words = (text_length + 63) / 64;
-    *mask = new uint64_t[*mask_words];
-    std::memset(*mask, 0, *mask_words * sizeof(uint64_t));
+    *mask = new uint64_t[*mask_words]();
 #ifdef BENCHMARK
     candidate_v3_timer.stop_sequential_part(0);
 #endif
 
-    for (int i = 0; i <= text_length - query_length; ++i) {
+    for (int i = 0; i < text_length - query_length; ++i) {
         if (text[i] == query[0]) {
             (*mask)[i >> 6] |= static_cast<uint64_t>(1) << (i & 63);
         }
@@ -32,9 +31,9 @@ void find_candidates(uint64_t **mask, int *mask_words, const std::string &text,
 
 bool test_candidate(const int index, const std::string &text,
                     const std::string &query) {
-    const int query_length = query.length();
+    const auto query_length = query.length();
 
-    for (size_t i = 0; i < query_length; ++i) {
+    for (int i = 0; i < query_length; ++i) {
         if (query[i] != text[i + index]) {
             return false;
         }
@@ -47,15 +46,13 @@ bool test_candidate(const int index, const std::string &text,
 std::vector<std::vector<int>>
 find_candidate_v3(const std::string &text,
                   const std::vector<std::string> &queries) {
-    std::vector<std::vector<int>> indices;
+    std::vector<std::vector<int>> indices(queries.size());
 
     for (int i = 0; i < queries.size(); ++i) {
-        indices.emplace_back();
-
-        const std::string &query = queries[i];
+        const auto &query = queries[i];
 
         uint64_t *mask;
-        int mask_words;
+        unsigned long mask_words;
 
 #ifdef BENCHMARK
         candidate_v3_timer.start_sequential_part(1, "find candidates");

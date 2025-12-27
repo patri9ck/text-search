@@ -8,7 +8,7 @@ Timer candidate_openmp_v1_timer = Timer(std::string("candidate_openmp_v1"));
 
 std::vector<std::vector<int>>
 benchmark_candidate_openmp_v1(const std::string &text,
-                       const std::vector<std::string> &queries) {
+                              const std::vector<std::string> &queries) {
     candidate_openmp_v1_timer.start_total();
 
     auto results = find_candidate_openmp_v1(text, queries);

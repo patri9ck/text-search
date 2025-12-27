@@ -10,8 +10,8 @@
 namespace {
 void find_candidates(int **results, int *results_size, const std::string &text,
                      const std::string &query) {
-    const int text_length = text.length();
-    const int query_length = query.length();
+    const auto text_length = text.length();
+    const auto query_length = query.length();
 
 #ifdef BENCHMARK
     candidate_v2_timer.start_sequential_part(0, "allocate array");
@@ -22,7 +22,7 @@ void find_candidates(int **results, int *results_size, const std::string &text,
     candidate_v2_timer.stop_sequential_part(0);
 #endif
 
-    for (int i = 0; i <= text_length - query_length; ++i) {
+    for (int i = 0; i < text_length - query_length; ++i) {
         if (text[i] == query[0]) {
             (*results)[*results_size] = i;
             *results_size = *results_size + 1;
@@ -32,7 +32,7 @@ void find_candidates(int **results, int *results_size, const std::string &text,
 
 bool test_candidate(const int index, const std::string &text,
                     const std::string &query) {
-    const int query_length = query.length();
+    const auto query_length = query.length();
 
     for (size_t i = 0; i < query_length; ++i) {
         if (query[i] != text[i + index]) {
@@ -48,11 +48,9 @@ bool test_candidate(const int index, const std::string &text,
 std::vector<std::vector<int>>
 find_candidate_v2(const std::string &text,
                   const std::vector<std::string> &queries) {
-    std::vector<std::vector<int>> indices;
+    std::vector<std::vector<int>> indices(queries.size());
 
     for (int i = 0; i < queries.size(); ++i) {
-        indices.emplace_back();
-
         const std::string &query = queries[i];
 
         int *results;

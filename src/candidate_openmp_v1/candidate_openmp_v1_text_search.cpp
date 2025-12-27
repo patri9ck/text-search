@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <iostream>
 #include <omp.h>
 
 #ifdef BENCHMARK
@@ -9,17 +10,17 @@
 #endif
 
 namespace {
-void find_candidates(uint64_t **mask, int *mask_words, const std::string &text,
-                     const std::string &query) {
-    const int text_length = text.length();
-    const int query_length = query.length();
+void find_candidates(uint64_t **mask, unsigned long *mask_words,
+                     const std::string &text, const std::string &query) {
+    const auto text_length = text.length();
+    const auto query_length = query.length();
 
     *mask_words = (text_length + 63) / 64;
-    *mask = new uint64_t[*mask_words];
-    std::memset(*mask, 0, *mask_words * sizeof(uint64_t));
+    *mask = new uint64_t[*mask_words]();
 
-    for (int i = 0; i <= text_length - query_length; ++i) {
-        if (text[i] == query[0]) {
+    for (int i = 0; i < text_length - query_length; ++i) {
+        if (text[i] == query[0] &&
+            text[i + query_length - 1] == query[query_length]) {
             (*mask)[i >> 6] |= static_cast<uint64_t>(1) << (i & 63);
         }
     }
@@ -27,9 +28,9 @@ void find_candidates(uint64_t **mask, int *mask_words, const std::string &text,
 
 bool test_candidate(const int index, const std::string &text,
                     const std::string &query) {
-    const int query_length = query.length();
+    const auto query_length = query.length();
 
-    for (size_t i = 0; i < query_length; ++i) {
+    for (int i = 0; i < query_length; ++i) {
         if (query[i] != text[i + index]) {
             return false;
         }
@@ -41,17 +42,23 @@ bool test_candidate(const int index, const std::string &text,
 
 std::vector<std::vector<int>>
 find_candidate_openmp_v1(const std::string &text,
-                  const std::vector<std::string> &queries) {
-    omp_set_num_threads(omp_get_max_threads());
+                         const std::vector<std::string> &queries) {
+    const auto max_threads = omp_get_max_threads();
+
+    omp_set_num_threads(max_threads);
+
+#ifdef BENCHMARK
+    std::cout << "Using " << max_threads << " threads." << std::endl;
+#endif
 
     std::vector<std::vector<int>> indices(queries.size());
 
-    #pragma omp parallel for default (none) shared(queries, indices, text)
+#pragma omp parallel for default(none) shared(queries, indices, text)
     for (int i = 0; i < queries.size(); ++i) {
         const std::string &query = queries[i];
 
         uint64_t *mask;
-        int mask_words;
+        unsigned long mask_words;
 
         find_candidates(&mask, &mask_words, text, query);
 
@@ -62,7 +69,6 @@ find_candidate_openmp_v1(const std::string &text,
                 int index = word * 64 + __builtin_ctzll(w);
 
                 if (test_candidate(index, text, query)) {
-                    #pragma omp critical
                     indices[i].push_back(index);
                 }
 
