@@ -1,6 +1,6 @@
 #include "candidate_openmp_v1/candidate_openmp_v1_text_search_benchmark.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search_benchmark.h"
-#include "candidate_openmp_v3/candidate_openmp_v3_text_search_benchmark.h"
+//#include "candidate_openmp_v3/candidate_openmp_v3_text_search_benchmark.h"
 #include "candidate_v1/candidate_v1_text_search_benchmark.h"
 #include "candidate_v2/candidate_v2_text_search_benchmark.h"
 #include "candidate_v3/candidate_v3_text_search_benchmark.h"
