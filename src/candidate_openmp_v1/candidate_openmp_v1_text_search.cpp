@@ -48,7 +48,7 @@ find_candidate_openmp_v1(const std::string &text,
     omp_set_num_threads(max_threads);
 
 #ifdef BENCHMARK
-    std::cout << "Using " << max_threads << " threads.";
+    std::cout << "Using " << max_threads << " threads." << std::endl;
 #endif
 
     std::vector<std::vector<int>> indices(queries.size());

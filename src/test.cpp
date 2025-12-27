@@ -31,6 +31,8 @@ void compare_results(std::vector<std::vector<int>> &expected,
         return;
     }
 
+    int wrong = 0;
+
     for (int i = 0; i < queries.size(); ++i) {
         auto &expected_indices = expected[i];
         auto &actual_indices = actual[i];
@@ -43,7 +45,7 @@ void compare_results(std::vector<std::vector<int>> &expected,
         }
 
         std::cout << name << ": Results for query " << queries[i]
-                  << "differ: " << std::endl;
+                  << " differ: " << std::endl;
 
         const auto max =
             std::max(expected_indices.size(), actual_indices.size());
@@ -64,9 +66,17 @@ void compare_results(std::vector<std::vector<int>> &expected,
                 continue;
             }
 
+            if (wrong == 100) {
+                std::cout << "Found 100 mismatches, stopping..." << std::endl;
+
+                return;
+            }
+
             std::cout << name << ": Index " << j << ":" << std::endl;
             std::cout << "Expected: " << expected_index << std::endl;
             std::cout << "Actual: " << actual_index << std::endl;
+
+            ++wrong;
         }
     }
 }
@@ -148,10 +158,8 @@ int main(const int argc, char **argv) {
     auto candidate_v3_results = benchmark_candidate_v3(total, queries);
     auto candidate_v4_results = benchmark_candidate_v4(total, queries);
     auto hash_results = benchmark_hash(total, queries);*/
-    // auto candidate_openmp_v1_results = benchmark_candidate_openmp_v1(total,
-    // queries);
-    auto candidate_openmp_v2_results =
-        benchmark_candidate_openmp_v2(total, queries);
+    auto candidate_openmp_v1_results = benchmark_candidate_openmp_v1(total, queries);
+    //auto candidate_openmp_v2_results = benchmark_candidate_openmp_v2(total, queries);
 
     /*compare_results(std_results, candidate_v1_results, queries,
     "candidate_v1"); compare_results(std_results, candidate_v2_results, queries,
@@ -161,6 +169,6 @@ int main(const int argc, char **argv) {
     "hash");*/
     /*compare_results(std_results, candidate_openmp_v1_results, queries,
     "candidate_openmp_v1");*/
-    compare_results(std_results, candidate_openmp_v2_results, queries,
-                    "candidate_openmp_v2");
+    /*compare_results(std_results, candidate_openmp_v2_results, queries,
+                    "candidate_openmp_v2");*/
 }

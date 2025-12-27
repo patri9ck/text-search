@@ -1,4 +1,51 @@
-# Rolling Hash Approach
+# Build Instructions
+
+- **Linux**
+  ```
+  $ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+  $ cmake --build build
+  ```
+- Windows
+- WSL
+
+This will create two executables in `build/`, `text-search` and `text-search-test`.
+
+# Running Tests
+
+```
+$ build/text-search-test -d data -f common-words.txt
+```
+
+# Implementations Overview
+
+- `candidate_v1`:
+  Loops through each query and then through each character of the text. If a character matches the first character of
+  the query,
+  its index is added to a vector (a candidate). After all candidates for all queries are collected, each are checked
+  character-by-character.
+
+- `candidate_v2`:
+  Same as `candidate_v1` but uses a pre-allocated int array per query the size of the text.
+
+- `candidate_v3`:
+  To save storage and improve cache utilization, a bit mask is used instead of an int array.
+
+- `candidate_v4`:
+  This creates a huge bit mask for all queries together instead of creating a one per query.
+
+- `hash`:
+  A rolling hash approach, hard to parallelize.
+
+- `std`:
+  An implementation using C++ stdlib functions used to check for correctness.
+
+- `candidate_openmp_v1`:
+  Parallelization of `candidate_v3` using OpenMP.
+
+- `candidate_openmp_v2`:
+  Parallelization of `candidate_v4` using OpenMP.
+
+# Rolling Hash Implementation
 
 1. **Define Prime Number**  
    In this implementation, we use a fixed prime number: `131`.
