@@ -7,6 +7,6 @@ extern Timer candidate_openmp_v1_timer;
 
 std::vector<std::vector<int>>
 benchmark_candidate_openmp_v1(const std::string &text,
-                       const std::vector<std::string> &queries);
+                              const std::vector<std::string> &queries);
 
 #endif

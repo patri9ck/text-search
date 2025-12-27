@@ -12,11 +12,11 @@ int main(const int argc, char **argv) {
     options.add_options()(
         "i,implementation", "implementation: candidate, std, hash",
         cxxopts::value<std::string>()->default_value("candidate"))(
-        "f,file", "files to search in",
+        "f,file", "file to search in",
         cxxopts::value<std::vector<std::string>>())(
-        "d,directory", "directories to search in",
+        "d,directory", "directory to search in",
         cxxopts::value<std::vector<std::string>>())(
-        "q,query", "queries",
+        "q,query", "query",
         cxxopts::value<std::vector<std::string>>())("h,help", "Print help");
 
     const auto result = options.parse(argc, argv);
