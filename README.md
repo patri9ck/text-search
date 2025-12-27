@@ -21,7 +21,7 @@ $ build/text-search-test -d data -f common-words.txt
 - `candidate_v1`:
   Loops through each query and then through each character of the text. If a character matches the first character of
   the query,
-  its index is added to a vector (a candidate). After all candidates for all queries are collected, each are checked
+  its index (a candidate) is added to a vector. After all candidates for all queries are collected, each are checked
   character-by-character.
 
 - `candidate_v2`:
@@ -31,7 +31,7 @@ $ build/text-search-test -d data -f common-words.txt
   To save storage and improve cache utilization, a bit mask is used instead of an int array.
 
 - `candidate_v4`:
-  This creates a huge bit mask for all queries together instead of creating a one per query.
+  This creates a huge bit mask for all queries together instead of creating one per query.
 
 - `hash`:
   A rolling hash approach, hard to parallelize.
