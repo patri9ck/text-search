@@ -37,7 +37,7 @@ $ build/text-search-test -d data -f common-words.txt
   A rolling hash approach, hard to parallelize.
 
 - `std`:
-  An implementation using C++ stdlib functions used to check for correctness.
+  An implementation using C++ standard library functions used to check for correctness.
 
 - `candidate_openmp_v1`:
   Parallelization of `candidate_v3` using OpenMP.
