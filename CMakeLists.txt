@@ -7,7 +7,9 @@ add_executable(text-search src/main.cpp
         src/candidate_v3/candidate_v3_text_search.cpp
         src/std/std_text_search.cpp
         src/hash/hash_text_search.cpp
-        src/util.cpp)
+        src/util.cpp
+        src/candidate_opencl_v1/candidate_opencl_v1_text_search.cpp)
+
 add_executable(text-search-test
         src/test.cpp
         src/timer.cpp

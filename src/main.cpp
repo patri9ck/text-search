@@ -10,7 +10,7 @@ int main(const int argc, char **argv) {
     cxxopts::Options options("text-search", "Search for words in big texts");
 
     options.add_options()(
-        "i,implementation", "implementation: candidate, std, hash",
+        "i,implementation", "implementation: candidate, std, hash, open_cl",
         cxxopts::value<std::string>()->default_value("candidate"))(
         "f,file", "file to search in",
         cxxopts::value<std::vector<std::string>>())(
@@ -41,6 +41,8 @@ int main(const int argc, char **argv) {
     } else if (implementation == "hash") {
         find = find_hash;
     } else if (implementation == "std") {
+        find = find_std;
+    } else if (implementation == "open_cl") {
         find = find_std;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
