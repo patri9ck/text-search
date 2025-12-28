@@ -1,6 +1,6 @@
 #include "candidate_openmp_v1/candidate_openmp_v1_text_search_benchmark.h"
+#include "candidate_openmp_v2/candidate_openmp_v2_text_search.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search_benchmark.h"
-//#include "candidate_openmp_v3/candidate_openmp_v3_text_search_benchmark.h"
 #include "candidate_v1/candidate_v1_text_search_benchmark.h"
 #include "candidate_v2/candidate_v2_text_search_benchmark.h"
 #include "candidate_v3/candidate_v3_text_search_benchmark.h"
@@ -9,6 +9,7 @@
 #include "hash/hash_text_search_benchmark.h"
 #include "std/std_text_search_benchmark.h"
 #include "util.h"
+
 #include <algorithm>
 
 #include <iostream>
@@ -85,13 +86,48 @@ int main(const int argc, char **argv) {
     cxxopts::Options options("text-search-benchmark",
                              "Search for words in big texts and benchmark it");
 
-    options.add_options()("f,file",
-                          "file containing queries seperated by whitespace",
-                          cxxopts::value<std::vector<std::string>>())(
-        "d,directory", "directory to search in",
-        cxxopts::value<std::vector<std::string>>());
+    options.add_options()("i,implementation", "implementation",
+                          cxxopts::value<std::string>())
+
+        ("f,file", "file containing queries seperated by whitespace",
+         cxxopts::value<std::vector<std::string>>())(
+            "d,directory", "directory to search in",
+            cxxopts::value<std::vector<std::string>>())(
+            "n", "limit queries to n",
+            cxxopts::value<size_t>()->default_value("0"))(
+            "m", "limit files to m",
+            cxxopts::value<size_t>()->default_value("0"));
 
     const auto result = options.parse(argc, argv);
+
+    if (result.count("help")) {
+        std::cout << options.help() << std::endl;
+        return 0;
+    }
+
+    std::string implementation = result["implementation"].as<std::string>();
+
+    std::vector<std::vector<int>> (*benchmark)(
+        const std::string &, const std::vector<std::string> &);
+
+    if (implementation == "candidate_v1") {
+        benchmark = benchmark_candidate_v1;
+    } else if (implementation == "candidate_v2") {
+        benchmark = benchmark_candidate_v2;
+    } else if (implementation == "candidate_v3") {
+        benchmark = benchmark_candidate_v3;
+    } else if (implementation == "candidate_v4") {
+        benchmark = benchmark_candidate_v4;
+    } else if (implementation == "hash") {
+        benchmark = benchmark_hash;
+    } else if (implementation == "candidate_openmp_v1") {
+        benchmark = benchmark_candidate_openmp_v1;
+    } else if (implementation == "candidate_openmp_v2") {
+        benchmark = benchmark_candidate_openmp_v2;
+    } else {
+        std::cerr << "Unknown implementation." << std::endl;
+        return 1;
+    }
 
     if (!result.count("file")) {
         std::cerr << "No files passed." << std::endl;
@@ -120,6 +156,16 @@ int main(const int argc, char **argv) {
         return 1;
     }
 
+    auto n = result["n"].as<size_t>();
+
+    if (n < 1) {
+        n = queries.size();
+    } else {
+        n = std::min(n, queries.size());
+    }
+
+    queries.resize(n);
+
     std::cout << "There are " << queries.size() << " queries." << std::endl;
 
     if (!result.count("directory")) {
@@ -144,31 +190,24 @@ int main(const int argc, char **argv) {
 
     std::string total;
 
-    for (const auto &text : texts) {
-        total += text;
+    auto m = result["m"].as<size_t>();
+
+    if (m < 1) {
+        m = texts.size();
+    } else {
+        m = std::min(m, texts.size());
     }
 
-    std::cout << "Assembled all texts to one of size " << total.length()
-              << std::endl;
+    for (size_t i = 0; i < m; ++i) {
+        total += texts[i];
+    }
+
+    std::cout << "Assembled all " << m << " texts to one of size "
+              << total.length() << std::endl;
 
     auto std_results = benchmark_std(total, queries);
 
-    /*auto candidate_v1_results = benchmark_candidate_v1(total, queries);
-    auto candidate_v2_results = benchmark_candidate_v2(total, queries);
-    auto candidate_v3_results = benchmark_candidate_v3(total, queries);
-    auto candidate_v4_results = benchmark_candidate_v4(total, queries);
-    auto hash_results = benchmark_hash(total, queries);*/
-    auto candidate_openmp_v1_results = benchmark_candidate_openmp_v1(total, queries);
-    //auto candidate_openmp_v2_results = benchmark_candidate_openmp_v2(total, queries);
+    auto results = benchmark(total, queries);
 
-    /*compare_results(std_results, candidate_v1_results, queries,
-    "candidate_v1"); compare_results(std_results, candidate_v2_results, queries,
-    "candidate_v2"); compare_results(std_results, candidate_v3_results, queries,
-    "candidate_v3"); compare_results(std_results, candidate_v4_results, queries,
-    "candidate_v4"); compare_results(std_results, hash_results, queries,
-    "hash");*/
-    /*compare_results(std_results, candidate_openmp_v1_results, queries,
-    "candidate_openmp_v1");*/
-    /*compare_results(std_results, candidate_openmp_v2_results, queries,
-                    "candidate_openmp_v2");*/
+    compare_results(std_results, results, queries, implementation);
 }

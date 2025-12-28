@@ -20,7 +20,8 @@ void find_candidates(uint64_t *mask, unsigned long mask_words,
     for (int i = 0; i < queries.size(); ++i) {
         const auto &query = queries[i];
         const auto query_length = query.size();
-        for (int j = 0; j < text_length - query_length; ++j) {
+
+        for (int j = 0; j <= text_length - query_length; ++j) {
             if (text[j] == query[0] &&
                 text[j + query_length - 1] == query[query_length - 1]) {
 #pragma omp atomic

@@ -46,6 +46,7 @@ int main(const int argc, char **argv) {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
     }
+
     auto queries = result["query"].as<std::vector<std::string>>();
 
     std::map<std::string, std::string> texts;

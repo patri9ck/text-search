@@ -18,9 +18,9 @@ void find_candidates(uint64_t **mask, unsigned long *mask_words,
     *mask_words = (text_length + 63) / 64;
     *mask = new uint64_t[*mask_words]();
 
-    for (int i = 0; i < text_length - query_length; ++i) {
+    for (int i = 0; i <= text_length - query_length; ++i) {
         if (text[i] == query[0] &&
-            text[i + query_length - 1] == query[query_length]) {
+            text[i + query_length - 1] == query[query_length - 1]) {
             (*mask)[i >> 6] |= static_cast<uint64_t>(1) << (i & 63);
         }
     }

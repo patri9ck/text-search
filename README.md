@@ -1,10 +1,12 @@
 # Build Instructions
 
 - **Linux**
+
 ```
 $ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 $ cmake --build build
 ```
+
 - Windows
 - WSL
 
@@ -28,7 +30,8 @@ $ build/text-search-test -d data -f common-words.txt
   Same as `candidate_v1` but uses a pre-allocated int array per query the size of the text.
 
 - `candidate_v3`:
-  To save storage and improve cache utilization, a bit mask is used instead of an int array.
+  To save storage and improve cache utilization, a bit mask is used instead of an int array. **The fastest non-std
+  sequential implementation.**
 
 - `candidate_v4`:
   This creates a huge bit mask for all queries together instead of creating one per query.
@@ -40,7 +43,7 @@ $ build/text-search-test -d data -f common-words.txt
   An implementation using C++ standard library functions used to check for correctness.
 
 - `candidate_openmp_v1`:
-  Parallelization of `candidate_v3` using OpenMP.
+  Parallelization of `candidate_v3` using OpenMP. **The fastest parallel implementation using CPU threads.**
 
 - `candidate_openmp_v2`:
   Parallelization of `candidate_v4` using OpenMP.
