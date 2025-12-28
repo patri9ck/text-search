@@ -3,7 +3,7 @@
 #include <iostream>
 #include <utility>
 
-Timer::Timer(std::string name) : name(std::move(name)) {}
+Timer::Timer(std::string name) : name(std::move(name)), total_duration(0) {}
 
 void Timer::start_total() {
     total_start = std::chrono::high_resolution_clock::now();

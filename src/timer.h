@@ -16,10 +16,10 @@ class Timer {
         void start_parallel_part(int index, const std::string &label = "");
         void stop_parallel_part(int index);
 
-        long get_total_time() const;
+        [[nodiscard]] long get_total_time() const;
 
-        std::map<int, long> get_sequential_parts() const;
-        std::map<int, long> get_parallel_parts() const;
+        [[nodiscard]] std::map<int, long> get_sequential_parts() const;
+        [[nodiscard]] std::map<int, long> get_parallel_parts() const;
 
         void print() const;
 
@@ -34,7 +34,7 @@ class Timer {
         const std::string name;
 
         std::chrono::time_point<std::chrono::high_resolution_clock> total_start;
-        long total_duration;
+        long total_duration{};
 
         std::map<int, Part> sequential_parts;
         std::map<int, Part> parallel_parts;
