@@ -96,7 +96,8 @@ int main(const int argc, char **argv) {
             "n", "limit queries to n",
             cxxopts::value<size_t>()->default_value("0"))(
             "m", "limit files to m",
-            cxxopts::value<size_t>()->default_value("0"));
+            cxxopts::value<size_t>()->default_value("0"))(
+            "c,compare", "compare with std", cxxopts::value<bool>());
 
     const auto result = options.parse(argc, argv);
 
@@ -205,9 +206,11 @@ int main(const int argc, char **argv) {
     std::cout << "Assembled all " << m << " texts to one of size "
               << total.length() << std::endl;
 
-    auto std_results = benchmark_std(total, queries);
-
     auto results = benchmark(total, queries);
 
-    compare_results(std_results, results, queries, implementation);
+    if (result["compare"].as<bool>()) {
+        auto std_results = benchmark_std(total, queries);
+
+        compare_results(std_results, results, queries, implementation);
+    }
 }
