@@ -66,7 +66,7 @@ find_candidate_openmp_v1(const std::string &text,
             uint64_t w = mask[word];
 
             while (w != 0) {
-                int index = word * 64 + __builtin_ctzll(w);
+                int index = word * 64 + std::countr_zero(w);
 
                 if (test_candidate(index, text, query)) {
                     indices[i].push_back(index);

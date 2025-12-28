@@ -76,7 +76,7 @@ find_candidate_v4(const std::string &text,
             uint64_t w = mask[i * mask_words + word];
 
             while (w != 0) {
-                int index = word * 64 + __builtin_ctzll(w);
+                int index = word * 64 + std::countr_zero(w);
 
                 if (test_candidate(index, text, query)) {
                     indices[i].push_back(index);

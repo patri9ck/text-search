@@ -1,9 +1,9 @@
-#include "candidate_v3_text_search.h"
+#include "candidate_opencl_v2_text_search.h"
 
 #include <cstdint>
 
 #ifdef BENCHMARK
-    #include "candidate_v3_text_search_benchmark.h"
+    #include "candidate_opencl_v2_text_search_benchmark.h"
 #endif
 
 namespace {
@@ -12,14 +12,8 @@ void find_candidates(uint64_t **mask, unsigned long *mask_words,
     const auto text_length = text.length();
     const auto query_length = query.length();
 
-#ifdef BENCHMARK
-    candidate_v3_timer.start_sequential_part(0, "allocate bitmask");
-#endif
     *mask_words = (text_length + 63) / 64;
     *mask = new uint64_t[*mask_words]();
-#ifdef BENCHMARK
-    candidate_v3_timer.stop_sequential_part(0);
-#endif
 
     for (int i = 0; i < text_length - query_length; ++i) {
         if (text[i] == query[0]) {
@@ -44,7 +38,7 @@ bool test_candidate(const int index, const std::string &text,
 } // namespace
 
 std::vector<std::vector<int>>
-find_candidate_v3(const std::string &text,
+find_candidate_opencl_v2(const std::string &text,
                   const std::vector<std::string> &queries) {
     std::vector<std::vector<int>> indices(queries.size());
 
@@ -54,22 +48,10 @@ find_candidate_v3(const std::string &text,
         uint64_t *mask;
         unsigned long mask_words;
 
-#ifdef BENCHMARK
-        candidate_v3_timer.start_sequential_part(1, "find candidates");
-#endif
-
         find_candidates(&mask, &mask_words, text, query);
-
-#ifdef BENCHMARK
-        candidate_v3_timer.stop_sequential_part(1);
-#endif
 
         for (int word = 0; word < mask_words; ++word) {
             uint64_t w = mask[word];
-
-#ifdef BENCHMARK
-            candidate_v3_timer.start_sequential_part(2, "test candidates");
-#endif
 
             while (w != 0) {
                 int index = word * 64 + std::countr_zero(w);
@@ -80,10 +62,6 @@ find_candidate_v3(const std::string &text,
 
                 w &= (w - 1);
             }
-
-#ifdef BENCHMARK
-            candidate_v3_timer.stop_sequential_part(2);
-#endif
         }
 
         delete[] mask;
