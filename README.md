@@ -30,7 +30,7 @@ $ build/text-search-test -d data -f common-words.txt
   Same as `candidate_v1` but uses a pre-allocated int array per query the size of the text.
 
 - `candidate_v3`:
-  To save storage and improve cache utilization, a bit mask is used instead of an int array. **The fastest non-std
+  To save storage and improve cache utilization, a bit mask is used instead of an int array. **The fastest candidate-based
   sequential implementation.**
 
 - `candidate_v4`:
