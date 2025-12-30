@@ -21,36 +21,35 @@ const char* kernel_source =
         "   __global const int* lengths,"
         "   __global int* results,"
         "   __global int* counts,"
-        "   int max_matches_per_query) "
-        "{"
-        "   int char_idx = get_global_id(0);"
-        "   int query_idx = get_global_id(1);"
-        "   "
-        "   // Boundary check for text length vs query length"
-        "   if (char_idx > (book_len - lengths[query_idx])) return;"
-        "   "
-        "   int start = offsets[query_idx];"
-        "   int len = lengths[query_idx];"
-        "   bool match = true;"
-        "   "
-        "   for (int i = 0; i < len; i++) {"
-        "       if (book[char_idx + i] != queries[start + i]) {"
-        "           match = false; break;"
-        "       }"
-        "   }"
-        "   "
-        "   if (match) {"
-        "       // Increment the specific counter for this query"
-        "       int pos = atomic_inc(&counts[query_idx]);"
-        "       "
-        "       if (pos < max_matches_per_query) {"
-        "           int write_pos = (query_idx * max_matches_per_query) + pos;"
-        "           results[write_pos] = char_idx;"
-        "       }"
-        "   }"
-        "}";
+        "   int max_matches_per_query) \n" // \n am Ende
+        "{\n"
+        "   int char_idx = get_global_id(0);\n"
+        "   int query_idx = get_global_id(1);\n"
+        "   \n"
+        "   /* Boundary check using C-style comment */\n"
+        "   if (char_idx > (book_len - lengths[query_idx])) return;\n"
+        "   \n"
+        "   int start = offsets[query_idx];\n"
+        "   int len = lengths[query_idx];\n"
+        "   bool match = true;\n"
+        "   \n"
+        "   for (int i = 0; i < len; i++) {\n"
+        "       if (book[char_idx + i] != queries[start + i]) {\n"
+        "           match = false; break;\n"
+        "       }\n"
+        "   }\n"
+        "   \n"
+        "   if (match) {\n"
+        "       int pos = atomic_inc(&counts[query_idx]);\n"
+        "       \n"
+        "       if (pos < max_matches_per_query) {\n"
+        "           int write_pos = (query_idx * max_matches_per_query) + pos;\n"
+        "           results[write_pos] = char_idx;\n"
+        "       }\n"
+        "   }\n"
+        "}\n";
 
-std::vector<std::vector<int>> testCandidate_cl(const std::string &text,
+std::vector<std::vector<int>> testCandidate_cl_v1(const std::string &text,
                                                const std::vector<std::string> &queries) {
     cl_int err;
     int num_queries = (int)queries.size();
@@ -93,8 +92,8 @@ std::vector<std::vector<int>> testCandidate_cl(const std::string &text,
     // 4. Create Buffers
     cl_mem book_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, text_len, (void*)text.data(), &err);
     cl_mem queries_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, packed_queries.size(), (void*)packed_queries.data(), &err);
-    cl_mem offsets_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, h_offsets.size() * sizeof(int), h_offsets.data(), &err);
-    cl_mem lengths_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, h_lengths.size() * sizeof(int), h_lengths.data(), &err);
+    cl_mem offsets_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, h_offsets.size() * sizeof(int), (void*)h_offsets.data(), &err);
+    cl_mem lengths_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, h_lengths.size() * sizeof(int), (void*)h_lengths.data(), &err);
 
     // Result Buffers
     cl_mem results_buf = clCreateBuffer(context, CL_MEM_WRITE_ONLY, num_queries * max_matches * sizeof(int), NULL, &err);
