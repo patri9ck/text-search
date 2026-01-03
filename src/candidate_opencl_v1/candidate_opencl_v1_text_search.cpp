@@ -53,10 +53,9 @@ std::vector<std::vector<int>> testCandidate_cl_v1(const std::string &text,
                                                const std::vector<std::string> &queries) {
     cl_int err;
     int num_queries = (int)queries.size();
-    int max_matches = 1000; // Maximum results tracked per word
+    int max_matches = 5000000; // Maximum results tracked per word
     int text_len = (int)text.size();
 
-    // 1. Setup Platform and Device
     cl_platform_id platform;
     checkErr(clGetPlatformIDs(1, &platform, NULL), "GetPlatform");
     cl_device_id device;
@@ -67,7 +66,6 @@ std::vector<std::vector<int>> testCandidate_cl_v1(const std::string &text,
     cl_command_queue queue = clCreateCommandQueue(context, device, 0, &err);
     checkErr(err, "CreateQueue");
 
-    // 2. Compile Kernel
     cl_program program = clCreateProgramWithSource(context, 1, &kernel_source, NULL, &err);
     err = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
     if (err != CL_SUCCESS) {
@@ -80,7 +78,6 @@ std::vector<std::vector<int>> testCandidate_cl_v1(const std::string &text,
     }
     cl_kernel kernel = clCreateKernel(program, "multi_search", &err);
 
-    // 3. Prepare Query Data (Packing)
     std::string packed_queries = "";
     std::vector<int> h_offsets, h_lengths;
     for (const auto& q : queries) {
@@ -89,18 +86,15 @@ std::vector<std::vector<int>> testCandidate_cl_v1(const std::string &text,
         packed_queries += q;
     }
 
-    // 4. Create Buffers
     cl_mem book_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, text_len, (void*)text.data(), &err);
     cl_mem queries_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, packed_queries.size(), (void*)packed_queries.data(), &err);
     cl_mem offsets_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, h_offsets.size() * sizeof(int), (void*)h_offsets.data(), &err);
     cl_mem lengths_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, h_lengths.size() * sizeof(int), (void*)h_lengths.data(), &err);
 
-    // Result Buffers
     cl_mem results_buf = clCreateBuffer(context, CL_MEM_WRITE_ONLY, num_queries * max_matches * sizeof(int), NULL, &err);
     std::vector<int> zero_counts(num_queries, 0);
     cl_mem counts_buf = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, num_queries * sizeof(int), zero_counts.data(), &err);
 
-    // 5. Set Arguments
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &book_buf);
     clSetKernelArg(kernel, 1, sizeof(int), &text_len);
     clSetKernelArg(kernel, 2, sizeof(cl_mem), &queries_buf);
@@ -110,20 +104,19 @@ std::vector<std::vector<int>> testCandidate_cl_v1(const std::string &text,
     clSetKernelArg(kernel, 6, sizeof(cl_mem), &counts_buf);
     clSetKernelArg(kernel, 7, sizeof(int), &max_matches);
 
-    // 6. Execute (2D Grid: Text Positions x Number of Queries)
+    //Execute (2D Grid: Text Positions x Number of Queries)
     size_t global_size[2] = { (size_t)text_len, (size_t)num_queries };
     checkErr(clEnqueueNDRangeKernel(queue, kernel, 2, NULL, global_size, NULL, 0, NULL, NULL), "Execute");
     clFinish(queue);
 
-    // 7. Read Results back to CPU
     std::vector<int> final_counts(num_queries);
     std::vector<int> all_results(num_queries * max_matches);
     clEnqueueReadBuffer(queue, counts_buf, CL_TRUE, 0, num_queries * sizeof(int), final_counts.data(), 0, NULL, NULL);
     clEnqueueReadBuffer(queue, results_buf, CL_TRUE, 0, all_results.size() * sizeof(int), all_results.data(), 0, NULL, NULL);
 
-    // 8. Format into Vector of Vectors
     std::vector<std::vector<int>> final_indices(num_queries);
     for (int i = 0; i < num_queries; i++) {
+        std::cout << "Final counts: " << final_counts[i] << std::endl;
         int count = std::min(final_counts[i], max_matches);
         for (int j = 0; j < count; j++) {
             final_indices[i].push_back(all_results[i * max_matches + j]);

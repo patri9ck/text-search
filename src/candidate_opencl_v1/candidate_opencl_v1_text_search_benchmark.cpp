@@ -3,20 +3,20 @@
 
 #include <iostream>
 
-Timer candidate_opencl_v2_timer = Timer(std::string("candidate_opencl_v2"));
+Timer candidate_opencl_v1_timer = Timer(std::string("candidate_opencl_v1"));
 
 std::vector<std::vector<int>>
-benchmark_candidate_opencl_v2(const std::string &text,
+benchmark_candidate_opencl_v1(const std::string &text,
                               const std::vector<std::string> &queries) {
-    candidate_opencl_v2_timer.start_total();
+    candidate_opencl_v1_timer.start_total();
 
     auto results = testCandidate_cl_v1(text, queries);
 
-    candidate_opencl_v2_timer.stop_total();
+    candidate_opencl_v1_timer.stop_total();
 
-    std::cout << "Finished candidate_opencl_v2 text search." << std::endl;
+    std::cout << "Finished candidate_opencl_v1 text search." << std::endl;
 
-    candidate_opencl_v2_timer.print();
+    candidate_opencl_v1_timer.print();
 
     return results;
 }

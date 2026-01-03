@@ -1,4 +1,5 @@
 #include "candidate_openmp_v1/candidate_openmp_v1_text_search_benchmark.h"
+#include "candidate_opencl_v1/candidate_opencl_v1_text_search_benchmark.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search_benchmark.h"
 #include "candidate_v1/candidate_v1_text_search_benchmark.h"
@@ -125,6 +126,8 @@ int main(const int argc, char **argv) {
         benchmark = benchmark_candidate_openmp_v1;
     } else if (implementation == "candidate_openmp_v2") {
         benchmark = benchmark_candidate_openmp_v2;
+    } else if (implementation == "candidate_opencl_v1") {
+        benchmark = benchmark_candidate_opencl_v1;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
