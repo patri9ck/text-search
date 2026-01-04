@@ -1,4 +1,5 @@
 #include "candidate_v3/candidate_v3_text_search.h"
+#include "candidate_opencl_v1/candidate_opencl_v1_text_search.h"
 #include "cxxopts.hpp"
 #include "hash/hash_text_search.h"
 #include "std/std_text_search.h"
@@ -43,7 +44,7 @@ int main(const int argc, char **argv) {
     } else if (implementation == "std") {
         find = find_std;
     } else if (implementation == "open_cl") {
-        find = find_std;
+        find = testCandidate_cl_v1;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
