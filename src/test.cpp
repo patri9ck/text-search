@@ -1,4 +1,5 @@
 #include "candidate_opencl_v1/candidate_opencl_v1_text_search.h"
+#include "candidate_opencl_v3/candidate_opencl_v3_text_search.h"
 #include "candidate_opencl_v2/candidate_opencl_v2_text_search.h"
 #include "candidate_openmp_v1/candidate_openmp_v1_text_search.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search.h"
@@ -137,6 +138,9 @@ int main(const int argc, char **argv) {
     } else if (implementation == "candidate_opencl_v1") {
         find = find_candidate_opencl_v1;
         timer = &candidate_opencl_v1_timer;
+    } else if (implementation == "candidate_opencl_v3") {
+        find = find_candidate_opencl_v3;
+        timer = &candidate_opencl_v3_timer;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
