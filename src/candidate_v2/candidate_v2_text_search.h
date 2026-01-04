@@ -4,9 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "../timer.h"
-
 #ifdef BENCHMARK
+    #include "../timer.h"
 extern Timer candidate_v2_timer;
 #endif
 

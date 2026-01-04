@@ -1,5 +1,5 @@
-#include "candidate_v3/candidate_v3_text_search.h"
 #include "candidate_opencl_v1/candidate_opencl_v1_text_search.h"
+#include "candidate_v3/candidate_v3_text_search.h"
 #include "cxxopts.hpp"
 #include "hash/hash_text_search.h"
 #include "std/std_text_search.h"
@@ -11,7 +11,7 @@ int main(const int argc, char **argv) {
     cxxopts::Options options("text-search", "Search for words in big texts");
 
     options.add_options()(
-        "i,implementation", "implementation: candidate, std, hash, open_cl",
+        "i,implementation", "implementation: candidate, std, hash, opencl",
         cxxopts::value<std::string>()->default_value("candidate"))(
         "f,file", "file to search in",
         cxxopts::value<std::vector<std::string>>())(
@@ -34,8 +34,8 @@ int main(const int argc, char **argv) {
 
     std::string implementation = result["implementation"].as<std::string>();
 
-    std::vector<std::vector<int>> (*find)(const std::string &,
-                                          const std::vector<std::string> &);
+    std::vector<std::vector<size_t>> (*find)(const std::string &,
+                                             const std::vector<std::string> &);
 
     if (implementation == "candidate") {
         find = find_candidate_v3;
@@ -43,8 +43,8 @@ int main(const int argc, char **argv) {
         find = find_hash;
     } else if (implementation == "std") {
         find = find_std;
-    } else if (implementation == "open_cl") {
-        find = testCandidate_cl_v1;
+    } else if (implementation == "opencl") {
+        find = find_candidate_opencl_v1;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;

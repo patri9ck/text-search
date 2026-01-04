@@ -5,6 +5,7 @@
 #include <vector>
 
 #ifdef BENCHMARK
+    #include "../timer.h"
 extern Timer std_timer;
 #endif
 

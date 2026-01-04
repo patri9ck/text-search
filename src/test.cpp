@@ -1,21 +1,14 @@
+#include "candidate_opencl_v1/candidate_opencl_v1_text_search.h"
 #include "candidate_opencl_v2/candidate_opencl_v2_text_search.h"
 #include "candidate_openmp_v1/candidate_openmp_v1_text_search.h"
-#include "candidate_openmp_v1/candidate_openmp_v1_text_search_benchmark.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search.h"
-#include "candidate_openmp_v2/candidate_openmp_v2_text_search_benchmark.h"
 #include "candidate_v1/candidate_v1_text_search.h"
-#include "candidate_v1/candidate_v1_text_search_benchmark.h"
 #include "candidate_v2/candidate_v2_text_search.h"
-#include "candidate_v2/candidate_v2_text_search_benchmark.h"
 #include "candidate_v3/candidate_v3_text_search.h"
-#include "candidate_v3/candidate_v3_text_search_benchmark.h"
 #include "candidate_v4/candidate_v4_text_search.h"
-#include "candidate_v4/candidate_v4_text_search_benchmark.h"
 #include "cxxopts.hpp"
 #include "hash/hash_text_search.h"
-#include "hash/hash_text_search_benchmark.h"
 #include "std/std_text_search.h"
-#include "std/std_text_search_benchmark.h"
 #include "util.h"
 
 #include <algorithm>
@@ -141,6 +134,9 @@ int main(const int argc, char **argv) {
     } else if (implementation == "candidate_openmp_v2") {
         find = find_candidate_openmp_v2;
         timer = &candidate_openmp_v2_timer;
+    } else if (implementation == "candidate_opencl_v1") {
+        find = find_candidate_opencl_v1;
+        timer = &candidate_opencl_v1_timer;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
@@ -222,12 +218,16 @@ int main(const int argc, char **argv) {
     std::cout << "Assembled all " << m << " texts to one of size "
               << total.length() << std::endl;
 
+    timer->start_total();
     auto results = find(total, queries);
+    timer->stop_total();
 
     timer->print();
 
     if (result["compare"].as<bool>()) {
+        std_timer.start_total();
         auto std_results = find_std(total, queries);
+        std_timer.stop_total();
 
         std_timer.print();
 
