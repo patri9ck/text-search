@@ -14,14 +14,14 @@ add_executable(text-search-test
         src/test.cpp
         src/timer.cpp
         src/util.cpp
-        src/candidate_v1/candidate_v1_text_search.cpp src/candidate_v1/candidate_v1_text_search_benchmark.cpp
-        src/candidate_v2/candidate_v2_text_search.cpp src/candidate_v2/candidate_v2_text_search_benchmark.cpp
-        src/candidate_v3/candidate_v3_text_search.cpp src/candidate_v3/candidate_v3_text_search_benchmark.cpp
-        src/candidate_v4/candidate_v4_text_search.cpp src/candidate_v4/candidate_v4_text_search_benchmark.cpp
-        src/candidate_openmp_v1/candidate_openmp_v1_text_search.cpp src/candidate_openmp_v1/candidate_openmp_v1_text_search_benchmark.cpp
-        src/candidate_openmp_v2/candidate_openmp_v2_text_search.cpp src/candidate_openmp_v2/candidate_openmp_v2_text_search_benchmark.cpp
-        src/std/std_text_search.cpp src/std/std_text_search_benchmark.cpp
-        src/hash/hash_text_search.cpp src/hash/hash_text_search_benchmark.cpp)
+        src/candidate_v1/candidate_v1_text_search.cpp
+        src/candidate_v2/candidate_v2_text_search.cpp
+        src/candidate_v3/candidate_v3_text_search.cpp
+        src/candidate_v4/candidate_v4_text_search.cpp
+        src/candidate_openmp_v1/candidate_openmp_v1_text_search.cpp
+        src/candidate_openmp_v2/candidate_openmp_v2_text_search.cpp
+        src/std/std_text_search.cpp
+        src/hash/hash_text_search.cpp)
 
 find_package(OpenCL REQUIRED)
 find_package(OpenMP REQUIRED)

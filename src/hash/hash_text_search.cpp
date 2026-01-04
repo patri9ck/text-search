@@ -4,47 +4,53 @@
 #include <string>
 #include <vector>
 
+#define PRIME 131
+
+#ifdef BENCHMARK
+Timer hash_timer = Timer(std::string("hash"));
+#endif
+
 namespace {
-uint64_t compute_power(uint64_t prime, int length) {
+
+uint64_t compute_power(size_t length) {
     uint64_t p = 1;
-    for (int i = 1; i < length; ++i) {
-        p *= prime;
+    for (size_t i = 1; i < length; ++i) {
+        p *= PRIME;
     }
     return p;
 }
 
 } // namespace
 
-std::vector<std::vector<int>>
+std::vector<std::vector<size_t>>
 find_hash(const std::string &text, const std::vector<std::string> &queries) {
-    std::vector<std::vector<int>> indices;
-    int text_length = text.length();
+    std::vector<std::vector<size_t>> indices(queries.size());
 
-    const uint64_t prime = 131;
+    auto text_length = text.length();
 
-    for (const auto &query : queries) {
-        std::vector<int> query_indices;
+    for (size_t i = 0; i < queries.size(); ++i) {
+        auto const &query = queries[i];
 
-        int m = query.length();
+        auto m = query.length();
 
         uint64_t query_hash = 0;
 
-        for (int i = 0; i < m; ++i) {
-            query_hash = query_hash * prime + query[i];
+        for (size_t j = 0; j < m; ++j) {
+            query_hash = query_hash * PRIME + query[j];
         }
 
-        uint64_t power = compute_power(prime, m);
+        auto power = compute_power(m);
 
         uint64_t window_hash = 0;
-        for (int i = 0; i < m; ++i) {
-            window_hash = window_hash * prime + text[i];
+        for (size_t j = 0; j < m; ++j) {
+            window_hash = window_hash * PRIME + text[j];
         }
 
         bool match = true;
 
         if (window_hash == query_hash) {
-            for (int i = 0; i < m; ++i) {
-                if (text[i] != query[i]) {
+            for (size_t j = 0; j < m; ++j) {
+                if (text[j] != query[j]) {
                     match = false;
 
                     break;
@@ -52,20 +58,20 @@ find_hash(const std::string &text, const std::vector<std::string> &queries) {
             }
 
             if (match) {
-                query_indices.push_back(0);
+                indices[i].push_back(0);
             }
         }
 
-        for (int i = 1; i <= text_length - m; ++i) {
+        for (size_t j = 1; j <= text_length - m; ++j) {
             match = true;
 
-            window_hash -= static_cast<uint64_t>(text[i - 1]) * power;
-            window_hash *= prime;
-            window_hash += text[i + m - 1];
+            window_hash -= static_cast<uint64_t>(text[j - 1]) * power;
+            window_hash *= PRIME;
+            window_hash += text[j + m - 1];
 
             if (window_hash == query_hash) {
-                for (int j = 0; j < m; ++j) {
-                    if (text[j + i] != query[j]) {
+                for (size_t k = 0; k < m; ++k) {
+                    if (text[k + j] != query[k]) {
                         match = false;
 
                         break;
@@ -73,12 +79,10 @@ find_hash(const std::string &text, const std::vector<std::string> &queries) {
                 }
 
                 if (match) {
-                    query_indices.push_back(i);
+                    indices[i].push_back(j);
                 }
             }
         }
-
-        indices.push_back(query_indices);
     }
 
     return indices;

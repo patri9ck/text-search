@@ -1,57 +1,58 @@
-#include <iostream>
-#include <vector>
-#include <string>
-#include <algorithm>
 #include <CL/opencl.h>
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
 
 // Helper to check for OpenCL errors
-void checkErr(cl_int err, const char* name) {
+void checkErr(cl_int err, const char *name) {
     if (err != CL_SUCCESS) {
         std::cerr << "ERROR: " << name << " (" << err << ")" << std::endl;
         exit(EXIT_FAILURE);
     }
 }
 
-const char* kernel_source =
-        "__kernel void multi_search("
-        "   __global const char* book,"
-        "   int book_len,"
-        "   __global const char* queries,"
-        "   __global const int* offsets,"
-        "   __global const int* lengths,"
-        "   __global int* results,"
-        "   __global int* counts,"
-        "   int max_matches_per_query) "
-        "{"
-        "   int char_idx = get_global_id(0);"
-        "   int query_idx = get_global_id(1);"
-        "   "
-        "   // Boundary check for text length vs query length"
-        "   if (char_idx > (book_len - lengths[query_idx])) return;"
-        "   "
-        "   int start = offsets[query_idx];"
-        "   int len = lengths[query_idx];"
-        "   bool match = true;"
-        "   "
-        "   for (int i = 0; i < len; i++) {"
-        "       if (book[char_idx + i] != queries[start + i]) {"
-        "           match = false; break;"
-        "       }"
-        "   }"
-        "   "
-        "   if (match) {"
-        "       // Increment the specific counter for this query"
-        "       int pos = atomic_inc(&counts[query_idx]);"
-        "       "
-        "       if (pos < max_matches_per_query) {"
-        "           int write_pos = (query_idx * max_matches_per_query) + pos;"
-        "           results[write_pos] = char_idx;"
-        "       }"
-        "   }"
-        "}";
+const char *kernel_source =
+    "__kernel void multi_search("
+    "   __global const char* book,"
+    "   int book_len,"
+    "   __global const char* queries,"
+    "   __global const int* offsets,"
+    "   __global const int* lengths,"
+    "   __global int* results,"
+    "   __global int* counts,"
+    "   int max_matches_per_query) "
+    "{"
+    "   int char_idx = get_global_id(0);"
+    "   int query_idx = get_global_id(1);"
+    "   "
+    "   // Boundary check for text length vs query length"
+    "   if (char_idx > (book_len - lengths[query_idx])) return;"
+    "   "
+    "   int start = offsets[query_idx];"
+    "   int len = lengths[query_idx];"
+    "   bool match = true;"
+    "   "
+    "   for (int i = 0; i < len; i++) {"
+    "       if (book[char_idx + i] != queries[start + i]) {"
+    "           match = false; break;"
+    "       }"
+    "   }"
+    "   "
+    "   if (match) {"
+    "       // Increment the specific counter for this query"
+    "       int pos = atomic_inc(&counts[query_idx]);"
+    "       "
+    "       if (pos < max_matches_per_query) {"
+    "           int write_pos = (query_idx * max_matches_per_query) + pos;"
+    "           results[write_pos] = char_idx;"
+    "       }"
+    "   }"
+    "}";
 
-std::vector<std::vector<int>> testCandidate_cl(const std::string &text,
-                                               const std::vector<std::string> &queries) {
+std::vector<std::vector<int>>
+testCandidate_cl(const std::string &text,
+                 const std::vector<std::string> &queries) {
     cl_int err;
     int num_queries = (int)queries.size();
     int max_matches = 1000; // Maximum results tracked per word
@@ -61,7 +62,8 @@ std::vector<std::vector<int>> testCandidate_cl(const std::string &text,
     cl_platform_id platform;
     checkErr(clGetPlatformIDs(1, &platform, NULL), "GetPlatform");
     cl_device_id device;
-    checkErr(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL), "GetDevice");
+    checkErr(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL),
+             "GetDevice");
 
     cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, &err);
     checkErr(err, "CreateContext");
@@ -69,13 +71,16 @@ std::vector<std::vector<int>> testCandidate_cl(const std::string &text,
     checkErr(err, "CreateQueue");
 
     // 2. Compile Kernel
-    cl_program program = clCreateProgramWithSource(context, 1, &kernel_source, NULL, &err);
+    cl_program program =
+        clCreateProgramWithSource(context, 1, &kernel_source, NULL, &err);
     err = clBuildProgram(program, 1, &device, NULL, NULL, NULL);
     if (err != CL_SUCCESS) {
         size_t log_size;
-        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL,
+                              &log_size);
         std::vector<char> log(log_size);
-        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), NULL);
+        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size,
+                              log.data(), NULL);
         std::cerr << "Compile Error:\n" << log.data() << std::endl;
         exit(1);
     }
@@ -84,22 +89,34 @@ std::vector<std::vector<int>> testCandidate_cl(const std::string &text,
     // 3. Prepare Query Data (Packing)
     std::string packed_queries = "";
     std::vector<int> h_offsets, h_lengths;
-    for (const auto& q : queries) {
+    for (const auto &q : queries) {
         h_offsets.push_back((int)packed_queries.size());
         h_lengths.push_back((int)q.size());
         packed_queries += q;
     }
 
     // 4. Create Buffers
-    cl_mem book_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, text_len, (void*)text.data(), &err);
-    cl_mem queries_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, packed_queries.size(), (void*)packed_queries.data(), &err);
-    cl_mem offsets_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, h_offsets.size() * sizeof(int), h_offsets.data(), &err);
-    cl_mem lengths_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, h_lengths.size() * sizeof(int), h_lengths.data(), &err);
+    cl_mem book_buf =
+        clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                       text_len, (void *)text.data(), &err);
+    cl_mem queries_buf = clCreateBuffer(
+        context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, packed_queries.size(),
+        (void *)packed_queries.data(), &err);
+    cl_mem offsets_buf =
+        clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                       h_offsets.size() * sizeof(int), h_offsets.data(), &err);
+    cl_mem lengths_buf =
+        clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                       h_lengths.size() * sizeof(int), h_lengths.data(), &err);
 
     // Result Buffers
-    cl_mem results_buf = clCreateBuffer(context, CL_MEM_WRITE_ONLY, num_queries * max_matches * sizeof(int), NULL, &err);
+    cl_mem results_buf =
+        clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+                       num_queries * max_matches * sizeof(int), NULL, &err);
     std::vector<int> zero_counts(num_queries, 0);
-    cl_mem counts_buf = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, num_queries * sizeof(int), zero_counts.data(), &err);
+    cl_mem counts_buf =
+        clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+                       num_queries * sizeof(int), zero_counts.data(), &err);
 
     // 5. Set Arguments
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &book_buf);
@@ -112,15 +129,21 @@ std::vector<std::vector<int>> testCandidate_cl(const std::string &text,
     clSetKernelArg(kernel, 7, sizeof(int), &max_matches);
 
     // 6. Execute (2D Grid: Text Positions x Number of Queries)
-    size_t global_size[2] = { (size_t)text_len, (size_t)num_queries };
-    checkErr(clEnqueueNDRangeKernel(queue, kernel, 2, NULL, global_size, NULL, 0, NULL, NULL), "Execute");
+    size_t global_size[2] = {(size_t)text_len, (size_t)num_queries};
+    checkErr(clEnqueueNDRangeKernel(queue, kernel, 2, NULL, global_size, NULL,
+                                    0, NULL, NULL),
+             "Execute");
     clFinish(queue);
 
     // 7. Read Results back to CPU
     std::vector<int> final_counts(num_queries);
     std::vector<int> all_results(num_queries * max_matches);
-    clEnqueueReadBuffer(queue, counts_buf, CL_TRUE, 0, num_queries * sizeof(int), final_counts.data(), 0, NULL, NULL);
-    clEnqueueReadBuffer(queue, results_buf, CL_TRUE, 0, all_results.size() * sizeof(int), all_results.data(), 0, NULL, NULL);
+    clEnqueueReadBuffer(queue, counts_buf, CL_TRUE, 0,
+                        num_queries * sizeof(int), final_counts.data(), 0, NULL,
+                        NULL);
+    clEnqueueReadBuffer(queue, results_buf, CL_TRUE, 0,
+                        all_results.size() * sizeof(int), all_results.data(), 0,
+                        NULL, NULL);
 
     // 8. Format into Vector of Vectors
     std::vector<std::vector<int>> final_indices(num_queries);
@@ -132,12 +155,16 @@ std::vector<std::vector<int>> testCandidate_cl(const std::string &text,
     }
 
     // Cleanup
-    clReleaseMemObject(book_buf); clReleaseMemObject(queries_buf);
-    clReleaseMemObject(offsets_buf); clReleaseMemObject(lengths_buf);
-    clReleaseMemObject(results_buf); clReleaseMemObject(counts_buf);
-    clReleaseKernel(kernel); clReleaseProgram(program);
-    clReleaseCommandQueue(queue); clReleaseContext(context);
+    clReleaseMemObject(book_buf);
+    clReleaseMemObject(queries_buf);
+    clReleaseMemObject(offsets_buf);
+    clReleaseMemObject(lengths_buf);
+    clReleaseMemObject(results_buf);
+    clReleaseMemObject(counts_buf);
+    clReleaseKernel(kernel);
+    clReleaseProgram(program);
+    clReleaseCommandQueue(queue);
+    clReleaseContext(context);
 
     return final_indices;
-
 }

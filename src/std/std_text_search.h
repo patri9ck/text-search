@@ -4,7 +4,11 @@
 #include <string>
 #include <vector>
 
-std::vector<std::vector<int>> find_std(const std::string &text,
-                                       const std::vector<std::string> &queries);
+#ifdef BENCHMARK
+extern Timer std_timer;
+#endif
+
+std::vector<std::vector<size_t>>
+find_std(const std::string &text, const std::vector<std::string> &queries);
 
 #endif

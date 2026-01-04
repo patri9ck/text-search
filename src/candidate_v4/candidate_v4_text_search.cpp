@@ -1,21 +1,26 @@
 #include "candidate_v4_text_search.h"
 
 #include <cstdint>
+#include <cstring>
 
 #ifdef BENCHMARK
-    #include "candidate_v4_text_search_benchmark.h"
+Timer candidate_v4_timer = Timer(std::string("candidate_v4"));
 #endif
 
 namespace {
 void find_candidates(uint64_t *mask, unsigned long mask_words,
                      const std::string &text,
                      const std::vector<std::string> &queries) {
-    for (int i = 0; i < text.length(); ++i) {
-        for (int j = 0; j < queries.size(); ++j) {
+    for (size_t i = 0; i < text.length(); ++i) {
+        for (size_t j = 0; j < queries.size(); ++j) {
             auto &query = queries[j];
             auto query_length = query.size();
 
-            if (text.length() - i >= query_length && text[i] == queries[j][0]) {
+            const auto mid = query_length >> 1;
+            const auto end = query_length - 1;
+
+            if (text.length() - i >= query_length && text[i] == query[0] &&
+                text[i + mid] == query[mid] && text[i + end] == query[end]) {
                 mask[j * mask_words + (i >> 6)] |= static_cast<uint64_t>(1)
                                                    << (i & 63);
             }
@@ -23,24 +28,16 @@ void find_candidates(uint64_t *mask, unsigned long mask_words,
     }
 }
 
-bool test_candidate(const int index, const std::string &text,
+bool test_candidate(const size_t index, const std::string &text,
                     const std::string &query) {
-    const auto query_length = query.length();
-
-    for (int i = 0; i < query_length; ++i) {
-        if (query[i] != text[i + index]) {
-            return false;
-        }
-    }
-
-    return true;
+    return std::memcmp(text.data() + index, query.data(), query.size()) == 0;
 }
 } // namespace
 
-std::vector<std::vector<int>>
+std::vector<std::vector<size_t>>
 find_candidate_v4(const std::string &text,
                   const std::vector<std::string> &queries) {
-    std::vector<std::vector<int>> indices;
+    std::vector<std::vector<size_t>> indices(queries.size());
 
 #ifdef BENCHMARK
     candidate_v4_timer.start_sequential_part(0, "allocate bitmask");
@@ -67,16 +64,18 @@ find_candidate_v4(const std::string &text,
     candidate_v4_timer.start_sequential_part(2, "test candidates");
 #endif
 
-    for (int i = 0; i < queries.size(); ++i) {
-        indices.emplace_back();
-
+    for (size_t i = 0; i < queries.size(); ++i) {
         const std::string &query = queries[i];
 
-        for (int word = 0; word < mask_words; ++word) {
-            uint64_t w = mask[i * mask_words + word];
+        for (unsigned long word = 0; word < mask_words; ++word) {
+            auto w = mask[i * mask_words + word];
+
+            if (w == 0) {
+                continue;
+            }
 
             while (w != 0) {
-                int index = word * 64 + std::countr_zero(w);
+                auto index = word * 64 + std::countr_zero(w);
 
                 if (test_candidate(index, text, query)) {
                     indices[i].push_back(index);

@@ -1,11 +1,45 @@
 \documentclass{article}
 
+\title{Parallel Text Search}
+\author{
+    Zwick, Patrick\\
+    \texttt{patrick.zwick@htwg-konstanz.de}
+    \and
+    Döbele, Max\\
+    \texttt{max.doebele@htwg-konstanz.de}
+    \and
+    Friesen, Marcel\\
+    \texttt{marcel.friesen@htwg-konstanz.de}
+}
+\date{06 February 2026}
+
 \begin{document}
-    \chapter{Testing Data}
+    \maketitle
+
+    \begin{abstract}
+    \end{abstract}
 
 
-    \chapter{Reference Implementation}
-    The sequential reference implementation follows the following approach:
+    \section{Introduction}
+    In this paper, we present the parallelization of text search in large texts for multiple queries in C++.
+    The parallelization is done across the CPU, in threads and process and across the GPU.
+    The paper also includes an approach which uses hierarchical approach, in which different processes are spawned
+    which create threads which use the CPU\@.
+    The goal is to find a solution per parallelization technology and also a combined solutions which works the best across
+    most computers.
+
+
+    \section{Testing Environment}
+    For testing, we use 98 books in total to search in from Project Gutenberg and assemble it to one text which result in over 82 million characters.
+    We query in total for the 100 most common english words.
+    Compilation is done using G++ with O3 optimizations.
+
+
+    \section{Testing Data}
+    Test
+
+
+    \section{Reference Implementation}
 
 
     \section{Bitmask Candidate Storage}
@@ -17,7 +51,7 @@
     \section{Summary}
 
 
-    \chapter{Parallized Implementation}
+    \section{Parallized Implementation}
 
 
     \section{OpenMPI}

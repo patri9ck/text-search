@@ -6,7 +6,11 @@
 
 #include "../timer.h"
 
-std::vector<std::vector<int>>
+#ifdef BENCHMARK
+extern Timer candidate_v4_timer;
+#endif
+
+std::vector<std::vector<size_t>>
 find_candidate_v4(const std::string &text,
                   const std::vector<std::string> &queries);
 

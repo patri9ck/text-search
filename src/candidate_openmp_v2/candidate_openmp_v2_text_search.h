@@ -6,7 +6,11 @@
 
 #include "../timer.h"
 
-std::vector<std::vector<int>>
+#ifdef BENCHMARK
+extern Timer candidate_openmp_v2_timer;
+#endif
+
+std::vector<std::vector<size_t>>
 find_candidate_openmp_v2(const std::string &text,
                          const std::vector<std::string> &queries);
 

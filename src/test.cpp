@@ -1,12 +1,20 @@
+#include "candidate_opencl_v2/candidate_opencl_v2_text_search.h"
+#include "candidate_openmp_v1/candidate_openmp_v1_text_search.h"
 #include "candidate_openmp_v1/candidate_openmp_v1_text_search_benchmark.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search_benchmark.h"
+#include "candidate_v1/candidate_v1_text_search.h"
 #include "candidate_v1/candidate_v1_text_search_benchmark.h"
+#include "candidate_v2/candidate_v2_text_search.h"
 #include "candidate_v2/candidate_v2_text_search_benchmark.h"
+#include "candidate_v3/candidate_v3_text_search.h"
 #include "candidate_v3/candidate_v3_text_search_benchmark.h"
+#include "candidate_v4/candidate_v4_text_search.h"
 #include "candidate_v4/candidate_v4_text_search_benchmark.h"
 #include "cxxopts.hpp"
+#include "hash/hash_text_search.h"
 #include "hash/hash_text_search_benchmark.h"
+#include "std/std_text_search.h"
 #include "std/std_text_search_benchmark.h"
 #include "util.h"
 
@@ -14,8 +22,8 @@
 
 #include <iostream>
 
-void compare_results(std::vector<std::vector<int>> &expected,
-                     std::vector<std::vector<int>> &actual,
+void compare_results(std::vector<std::vector<size_t>> &expected,
+                     std::vector<std::vector<size_t>> &actual,
                      const std::vector<std::string> &queries,
                      const std::string &name) {
     if (expected.size() != queries.size()) {
@@ -32,9 +40,9 @@ void compare_results(std::vector<std::vector<int>> &expected,
         return;
     }
 
-    int wrong = 0;
+    unsigned int wrong = 0;
 
-    for (int i = 0; i < queries.size(); ++i) {
+    for (size_t i = 0; i < queries.size(); ++i) {
         auto &expected_indices = expected[i];
         auto &actual_indices = actual[i];
 
@@ -51,7 +59,7 @@ void compare_results(std::vector<std::vector<int>> &expected,
         const auto max =
             std::max(expected_indices.size(), actual_indices.size());
 
-        for (int j = 0; j < max; ++j) {
+        for (unsigned long j = 0; j < max; ++j) {
             std::string expected_index;
             std::string actual_index;
 
@@ -108,23 +116,31 @@ int main(const int argc, char **argv) {
 
     std::string implementation = result["implementation"].as<std::string>();
 
-    std::vector<std::vector<int>> (*benchmark)(
-        const std::string &, const std::vector<std::string> &);
+    std::vector<std::vector<size_t>> (*find)(const std::string &,
+                                             const std::vector<std::string> &);
+    Timer *timer;
 
     if (implementation == "candidate_v1") {
-        benchmark = benchmark_candidate_v1;
+        find = find_candidate_v1;
+        timer = &candidate_v1_timer;
     } else if (implementation == "candidate_v2") {
-        benchmark = benchmark_candidate_v2;
+        find = find_candidate_v2;
+        timer = &candidate_v2_timer;
     } else if (implementation == "candidate_v3") {
-        benchmark = benchmark_candidate_v3;
+        find = find_candidate_v3;
+        timer = &candidate_v3_timer;
     } else if (implementation == "candidate_v4") {
-        benchmark = benchmark_candidate_v4;
+        find = find_candidate_v4;
+        timer = &candidate_v4_timer;
     } else if (implementation == "hash") {
-        benchmark = benchmark_hash;
+        find = find_hash;
+        timer = &hash_timer;
     } else if (implementation == "candidate_openmp_v1") {
-        benchmark = benchmark_candidate_openmp_v1;
+        find = find_candidate_openmp_v1;
+        timer = &candidate_openmp_v1_timer;
     } else if (implementation == "candidate_openmp_v2") {
-        benchmark = benchmark_candidate_openmp_v2;
+        find = find_candidate_openmp_v2;
+        timer = &candidate_openmp_v2_timer;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
@@ -206,10 +222,14 @@ int main(const int argc, char **argv) {
     std::cout << "Assembled all " << m << " texts to one of size "
               << total.length() << std::endl;
 
-    auto results = benchmark(total, queries);
+    auto results = find(total, queries);
+
+    timer->print();
 
     if (result["compare"].as<bool>()) {
-        auto std_results = benchmark_std(total, queries);
+        auto std_results = find_std(total, queries);
+
+        std_timer.print();
 
         compare_results(std_results, results, queries, implementation);
     }
