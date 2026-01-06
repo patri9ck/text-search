@@ -162,7 +162,7 @@ find_candidate_v1(const std::string &text,
     This approach ensures that candidate extraction runs in time proportional to the number of valid candidates rather than the size of the bitmask.
 
     \subsubsection{Using a Bitmask for All Queries Together}
-    Instead of allocating a separate bitmask for each query and clearing it after processing, we can allocate a single bitmask large enough to store candidate positions for \emph{all queries} simultaneously.
+    Instead of allocating a separate bitmask for each query and clearing it after processing, the \texttt{candidate\_v4} implementation uses single bitmask large enough to store candidate positions for \emph{all queries} simultaneously.
 
     For $n$ queries, the total bitmask size becomes
     \[
