@@ -62,7 +62,7 @@ find_candidate_openmp_v2(const std::string &text,
 
 #pragma omp parallel for default(none)                                         \
     shared(queries, mask_words, mask, text, indices)
-    for (size_t i = 0; i < queries.size(); ++i) {
+    for (long long i = 0; i < queries.size(); ++i) {
         const std::string &query = queries[i];
 
         for (unsigned long word = 0; word < mask_words; ++word) {
