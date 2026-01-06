@@ -60,10 +60,6 @@ find_candidate_openmp_v1(const std::string &text,
         for (unsigned long word = 0; word < mask_words; ++word) {
             uint64_t w = mask[word];
 
-            if (w == 0) {
-                continue;
-            }
-
             while (w != 0) {
                 auto index = word * 64 + std::countr_zero(w);
 

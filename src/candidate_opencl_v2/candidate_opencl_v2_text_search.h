@@ -6,7 +6,7 @@
 
 #ifdef BENCHMARK
     #include "../timer.h"
-extern Timer candidate_v3_timer;
+extern Timer candidate_opencl_v2_timer;
 #endif
 
 std::vector<std::vector<size_t>>

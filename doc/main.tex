@@ -1,5 +1,10 @@
 \documentclass{article}
 
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage[a4paper,width=150mm,top=25mm,bottom=25mm,bindingoffset=6mm]{geometry}
+\usepackage{amssymb}
+
 \title{Parallel Text Search}
 \author{
     Zwick, Patrick\\
@@ -21,46 +26,145 @@
 
 
     \section{Introduction}
-    In this paper, we present the parallelization of text search in large texts for multiple queries in C++.
-    The parallelization is done across the CPU, in threads and process and across the GPU.
-    The paper also includes an approach which uses hierarchical approach, in which different processes are spawned
-    which create threads which use the CPU\@.
-    The goal is to find a solution per parallelization technology and also a combined solutions which works the best across
-    most computers.
-
-
-    \section{Testing Environment}
-    For testing, we use 98 books in total to search in from Project Gutenberg and assemble it to one text which result in over 82 million characters.
-    We query in total for the 100 most common english words.
-    Compilation is done using G++ with O3 optimizations.
 
 
     \section{Testing Data}
-    Test
+    For testing, we use a collection of up to 98 books from Project Gutenberg, which we concatenate into a single text containing over 82 million characters.
+    We perform queries using, at most, the 100 most common English words.
+    Both the number of books and the number of queries can be varied to evaluate performance under different conditions.
 
 
-    \section{Reference Implementation}
+    \section{Sequential Implementations}
 
+    \subsection{Reference Implementation}
+    To verify correctness, we use a simple baseline implementation, denoted \texttt{std}, which relies on \texttt{std::string::find()} for substring matching (see \autoref{lst:std}).
+    \begin{lstlisting}[language=C++, caption=\texttt{find\_std()} in \texttt{std\_text\_search.cpp}, captionpos=b, label=lst:std]
+std::vector<std::vector<size_t>>
+find_std(const std::string &text, const std::vector<std::string> &queries) {
+    std::vector<std::vector<size_t>> indices(queries.size());
+    for (size_t i = 0; i < queries.size(); ++i) {
+        const std::string &query = queries[i];
+        auto pos = text.find(query);
+        while (pos != std::string::npos) {
+            indices[i].push_back(pos);
+            pos = text.find(query, pos + 1);
+        }
+    }
+    return indices;
+}
+    \end{lstlisting}
 
-    \section{Bitmask Candidate Storage}
+    \subsection{Candidate Selection and Validation Approach}
+    The first implementation is divided into two distinct phases:
+    \begin{enumerate}
+        \item Identification of candidate positions for potential occurrences based on a simple filtering criterion.
+        A position is considered a candidate if three characters match: the first character of the query, the middle character, and the last character.
+        \item Verification of each candidate position to determine whether it constitutes a valid occurrence.
+    \end{enumerate}
 
+    The initial approach, denoted \texttt{candidate\_v1}, performs candidate identification followed by validation separately for each query (see \autoref{lst:candidatev1}).
+    The vector is cleared after each query and reused for the next, avoiding unnecessary allocations.
+    \begin{lstlisting}[language=C++, caption={\texttt{find\_candidates()}, \texttt{test\_candidate()} and \texttt{find\_candidate\_v1()} in \texttt{candidate\_v1\_text\_search.cpp}}, captionpos=b, label=lst:candidatev1]
+void find_candidates(const size_t text_length, std::vector<size_t> &results,
+                     const std::string &text, const std::string &query) {
+    const auto query_length = query.length();
+    const auto mid = query_length >> 1;
+    const auto end = query_length - 1;
+    for (size_t i = 0; i < text_length - query_length; ++i) {
+        if (text[i] == query[0] && text[i + mid] == query[mid] &&
+            text[i + end] == query[end]) {
+            results.push_back(i);
+        }
+    }
+}
 
-    \section{SIMD Character Lookup}
+bool test_candidate(const size_t index, const std::string &text,
+                    const std::string &query) {
+    return std::memcmp(text.data() + index, query.data(), query.size()) == 0;
+}
 
+std::vector<std::vector<size_t>>
+find_candidate_v1(const std::string &text,
+                  const std::vector<std::string> &queries) {
+    std::vector<std::vector<size_t>> indices(queries.size());
+    const auto text_length = text.length();
+    std::vector<size_t> results;
+    for (size_t i = 0; i < queries.size(); ++i) {
+        const std::string &query = queries[i];
+        find_candidates(text_length, results, text, query);
+        for (const auto &result : results) {
+            if (test_candidate(result, text, query)) {
+                indices[i].push_back(result);
+            }
+        }
+        std::memset(results.data(), 0, results.size() * sizeof(size_t));
+    }
 
-    \section{Summary}
+    return indices;
+}
+    \end{lstlisting}
 
+    \subsubsection{Using an Array Instead of \texttt{std::vector}}
+    Since a \texttt{std::vector} may need to repeatedly grow its underlying storage and copy existing elements when its capacity is exceeded, this can introduce a significant performance bottleneck, at least for the first query.
+    To avoid this overhead, the \texttt{candidate\_v2} implementation instead pre-allocates an array with a size equal to the length of the text.
+    In the worst case, every position in the text could be a valid candidate, so this allocation is sufficient to store all candidates.
 
-    \section{Parallized Implementation}
+    \subsubsection{Using a Bitmask}
+    To improve CPU cache utilization and reduce the memory footprint, we represent the candidate buffer as a \emph{bitmask}, where each bit set to~1 denotes a valid candidate position.
+    The bitmask is stored as an array of unsigned 64-bit integers, allowing 64 candidates to be packed into a single word.
 
+    Let $m$ denote the length of the text.
+    To represent candidate positions for a query of any length, we require
+    \[
+        \left\lceil \frac{m + 63}{64} \right\rceil
+    \]
+    64-bit words in the bitmask.
 
-    \section{OpenMPI}
+    For a candidate at position $k$, the word index $w$ of the corresponding 64-bit word $B_w$ in the bitmask is obtained by dividing $k$ by~64 which can be efficiently computed by a right shift of 6 bits:
+    \[
+        w = \frac{k}{64} = k \gg 6.
+    \]
 
+    The bit position $b$ within the word $B_w$ is given by taking $k$ modulo 64, which can be efficiently computed by a bitwise AND with 63:
+    \[
+        b = k \bmod 64 = k \,\&\, 63.
+    \]
 
-    \section{OpenMP}
+    To set this bit, we construct a temporary value with only the target bit active by shifting the integer constant $1$ to the left by the bit position $b$, and then update the mask word using the bitwise OR:
+    \[
+        B_w \gets B_w \,\lor\, (1 \ll b).
+    \]
 
+    To reconstruct candidate positions from the bitmask, we iterate over all 64-bit words and extract the indices of the set bits.
 
-    \section{OpenCL}
+    For a given word index $w$, let $B_w$ again denote the corresponding 64-bit word.
+    If $B_w = 0$, the word contains no valid candidates.
+    Otherwise, we repeatedly extract the least significant set bit until $B_w$ becomes zero.
+
+    The position of this bit within the word is obtained using the number of trailing zeros:
+    \[
+        b = \operatorname{ctz}(B_w),
+    \]
+    where $\operatorname{ctz}$ denotes the count of trailing zero bits.
+
+    The corresponding global candidate index is then
+    \[
+        k = 64w + b.
+    \]
+
+    After processing a candidate, the lowest set bit is cleared using the operation
+    \[
+        B_w \leftarrow B_w \,\&\, (B_w - 1),
+    \]
+    which removes the extracted bit and guarantees termination after all set bits have been processed.
+
+    This approach ensures that candidate extraction runs in time proportional to the number of valid candidates rather than the size of the bitmask.
+
+    \subsubsection{Using a Bitmask for All Queries Together}
+
+    \subsection{Rolling-Hash Approach}
+
+    \subsection{Evaluation}
 
 
     \section{Summary}

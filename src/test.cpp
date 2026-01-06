@@ -137,6 +137,9 @@ int main(const int argc, char **argv) {
     } else if (implementation == "candidate_opencl_v1") {
         find = find_candidate_opencl_v1;
         timer = &candidate_opencl_v1_timer;
+    } else if (implementation == "candidate_opencl_v2") {
+        find = find_candidate_opencl_v2;
+        timer = &candidate_opencl_v2_timer;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;

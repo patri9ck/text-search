@@ -39,40 +39,16 @@ find_candidate_v4(const std::string &text,
                   const std::vector<std::string> &queries) {
     std::vector<std::vector<size_t>> indices(queries.size());
 
-#ifdef BENCHMARK
-    candidate_v4_timer.start_sequential_part(0, "allocate bitmask");
-#endif
-
     unsigned long mask_words = (text.length() + 63) / 64;
     auto *mask = new uint64_t[mask_words * queries.size()]();
 
-#ifdef BENCHMARK
-    candidate_v4_timer.stop_sequential_part(0);
-#endif
-
-#ifdef BENCHMARK
-    candidate_v4_timer.start_sequential_part(1, "find candidates");
-#endif
-
     find_candidates(mask, mask_words, text, queries);
-
-#ifdef BENCHMARK
-    candidate_v4_timer.stop_sequential_part(1);
-#endif
-
-#ifdef BENCHMARK
-    candidate_v4_timer.start_sequential_part(2, "test candidates");
-#endif
 
     for (size_t i = 0; i < queries.size(); ++i) {
         const std::string &query = queries[i];
 
         for (unsigned long word = 0; word < mask_words; ++word) {
             auto w = mask[i * mask_words + word];
-
-            if (w == 0) {
-                continue;
-            }
 
             while (w != 0) {
                 auto index = word * 64 + std::countr_zero(w);
@@ -85,10 +61,6 @@ find_candidate_v4(const std::string &text,
             }
         }
     }
-
-#ifdef BENCHMARK
-    candidate_v4_timer.stop_sequential_part(2);
-#endif
 
     delete[] mask;
 
