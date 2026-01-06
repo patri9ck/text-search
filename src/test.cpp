@@ -1,6 +1,6 @@
 #include "candidate_opencl_v1/candidate_opencl_v1_text_search.h"
-#include "candidate_opencl_v3/candidate_opencl_v3_text_search.h"
 #include "candidate_opencl_v2/candidate_opencl_v2_text_search.h"
+#include "candidate_opencl_v3/candidate_opencl_v3_text_search.h"
 #include "candidate_openmp_v1/candidate_openmp_v1_text_search.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search.h"
 #include "candidate_v1/candidate_v1_text_search.h"

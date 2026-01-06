@@ -11,12 +11,14 @@ Problem:
 ```
 int pos = atomic_inc(&counts[query_idx]);
 ```
+
 This leads to a bottleneck if 1000s of threads wants to increment the same counter they have to wait for each other.
-And this will happen especially for words that are very common like "the" or "and". 
+And this will happen especially for words that are very common like "the" or "and".
 
 improvemnts from v1 to v3
+
 - instead of each queries getting its own memory of 5 mio. slots we use a global memory of 20 million slots
-we safe lots of memory
+  we safe lots of memory
 - define local workgroup size to 256 threads
 
 v1: ca. 3.2 sekunden
@@ -91,5 +93,6 @@ __local char local_book[384];
             out_query_ids[pos] = query_idx;
         }
     }
+
 }
 )raw";

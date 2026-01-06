@@ -57,7 +57,8 @@ __kernel void multi_search(
 )raw";
 
 std::vector<std::vector<size_t>>
-find_candidate_opencl_v3(const std::string &text, const std::vector<std::string> &queries) {
+find_candidate_opencl_v3(const std::string &text,
+                         const std::vector<std::string> &queries) {
     cl_int err;
     int num_queries = (int)queries.size();
     long text_len = (long)text.size();
@@ -73,7 +74,8 @@ find_candidate_opencl_v3(const std::string &text, const std::vector<std::string>
     cl_command_queue queue = clCreateCommandQueue(context, device, 0, &err);
 
     // --- Program & Kernel ---
-    cl_program program = clCreateProgramWithSource(context, 1, &kernel_source, NULL, &err);
+    cl_program program =
+        clCreateProgramWithSource(context, 1, &kernel_source, NULL, &err);
     clBuildProgram(program, 1, &device, NULL, NULL, NULL);
     cl_kernel kernel = clCreateKernel(program, "multi_search", &err);
 
@@ -87,17 +89,31 @@ find_candidate_opencl_v3(const std::string &text, const std::vector<std::string>
     }
 
     // --- Buffer erstellen ---
-    cl_mem book_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, text_len, (void*)text.data(), &err);
-    cl_mem queries_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, packed_queries.size(), (void*)packed_queries.data(), &err);
-    cl_mem offsets_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, h_offsets.size()*4, h_offsets.data(), &err);
-    cl_mem lengths_buf = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, h_lengths.size()*4, h_lengths.data(), &err);
+    cl_mem book_buf =
+        clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                       text_len, (void *)text.data(), &err);
+    cl_mem queries_buf = clCreateBuffer(
+        context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, packed_queries.size(),
+        (void *)packed_queries.data(), &err);
+    cl_mem offsets_buf =
+        clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                       h_offsets.size() * 4, h_offsets.data(), &err);
+    cl_mem lengths_buf =
+        clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                       h_lengths.size() * 4, h_lengths.data(), &err);
 
     // NEU: Die zwei Output-Listen und der globale Zähler
-    cl_mem indices_buf = clCreateBuffer(context, CL_MEM_READ_WRITE, max_total_results * sizeof(int), NULL, &err);
-    cl_mem qids_buf = clCreateBuffer(context, CL_MEM_READ_WRITE, max_total_results * sizeof(int), NULL, &err);
+    cl_mem indices_buf =
+        clCreateBuffer(context, CL_MEM_READ_WRITE,
+                       max_total_results * sizeof(int), NULL, &err);
+    cl_mem qids_buf =
+        clCreateBuffer(context, CL_MEM_READ_WRITE,
+                       max_total_results * sizeof(int), NULL, &err);
 
     int zero = 0;
-    cl_mem counter_buf = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof(int), &zero, &err);
+    cl_mem counter_buf =
+        clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+                       sizeof(int), &zero, &err);
 
     // --- Kernel Argumente ---
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &book_buf);
@@ -111,20 +127,26 @@ find_candidate_opencl_v3(const std::string &text, const std::vector<std::string>
     clSetKernelArg(kernel, 8, sizeof(int), &max_total_results);
 
     size_t local_size[2] = {256, 1};
-    size_t global_size[2] = {((text_len + 255)/256)*256, (size_t)num_queries};
-    clEnqueueNDRangeKernel(queue, kernel, 2, NULL, global_size, local_size, 0, NULL, NULL);
+    size_t global_size[2] = {((text_len + 255) / 256) * 256,
+                             (size_t)num_queries};
+    clEnqueueNDRangeKernel(queue, kernel, 2, NULL, global_size, local_size, 0,
+                           NULL, NULL);
     clFinish(queue);
 
     // --- Ergebnisse abholen ---
     int final_count = 0;
-    clEnqueueReadBuffer(queue, counter_buf, CL_TRUE, 0, sizeof(int), &final_count, 0, NULL, NULL);
+    clEnqueueReadBuffer(queue, counter_buf, CL_TRUE, 0, sizeof(int),
+                        &final_count, 0, NULL, NULL);
 
     int actual_read = std::min(final_count, max_total_results);
     std::vector<int> h_indices(actual_read);
     std::vector<int> h_qids(actual_read);
 
-    clEnqueueReadBuffer(queue, indices_buf, CL_TRUE, 0, actual_read * sizeof(int), h_indices.data(), 0, NULL, NULL);
-    clEnqueueReadBuffer(queue, qids_buf, CL_TRUE, 0, actual_read * sizeof(int), h_qids.data(), 0, NULL, NULL);
+    clEnqueueReadBuffer(queue, indices_buf, CL_TRUE, 0,
+                        actual_read * sizeof(int), h_indices.data(), 0, NULL,
+                        NULL);
+    clEnqueueReadBuffer(queue, qids_buf, CL_TRUE, 0, actual_read * sizeof(int),
+                        h_qids.data(), 0, NULL, NULL);
 
     // --- Ergebnisse sortieren (CPU) ---
     std::vector<std::vector<size_t>> final_indices(num_queries);
@@ -132,18 +154,24 @@ find_candidate_opencl_v3(const std::string &text, const std::vector<std::string>
         final_indices[h_qids[i]].push_back((size_t)h_indices[i]);
     }
 
-    // WICHTIG: Die GPU liefert die Indizes unsortiert. std::find erwartet sie sortiert.
+    // WICHTIG: Die GPU liefert die Indizes unsortiert. std::find erwartet sie
+    // sortiert.
     for (int q = 0; q < num_queries; q++) {
         std::sort(final_indices[q].begin(), final_indices[q].end());
     }
 
     // --- Cleanup ---
-    clReleaseMemObject(book_buf); clReleaseMemObject(queries_buf);
-    clReleaseMemObject(offsets_buf); clReleaseMemObject(lengths_buf);
-    clReleaseMemObject(indices_buf); clReleaseMemObject(qids_buf);
+    clReleaseMemObject(book_buf);
+    clReleaseMemObject(queries_buf);
+    clReleaseMemObject(offsets_buf);
+    clReleaseMemObject(lengths_buf);
+    clReleaseMemObject(indices_buf);
+    clReleaseMemObject(qids_buf);
     clReleaseMemObject(counter_buf);
-    clReleaseKernel(kernel); clReleaseProgram(program);
-    clReleaseCommandQueue(queue); clReleaseContext(context);
+    clReleaseKernel(kernel);
+    clReleaseProgram(program);
+    clReleaseCommandQueue(queue);
+    clReleaseContext(context);
 
     return final_indices;
 }

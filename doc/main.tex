@@ -35,6 +35,7 @@
 
 
     \section{Sequential Implementations}
+    Goals of the sequential implementations: Simple, easy to parallize, as few dependencies as possible
 
     \subsection{Reference Implementation}
     To verify correctness, we use a simple baseline implementation, denoted \texttt{std}, which relies on \texttt{std::string::find()} for substring matching (see \autoref{lst:std}).
@@ -110,13 +111,13 @@ find_candidate_v1(const std::string &text,
     In the worst case, every position in the text could be a valid candidate, so this allocation is sufficient to store all candidates.
 
     \subsubsection{Using a Bitmask}
-    To improve CPU cache utilization and reduce the memory footprint, we represent the candidate buffer as a \emph{bitmask}, where each bit set to~1 denotes a valid candidate position.
+    To improve CPU cache utilization and reduce the memory footprint, the \texttt{candidate\_v3} implementation represents the candidate buffer as a \emph{bitmask}, where each bit set to~1 denotes a valid candidate position.
     The bitmask is stored as an array of unsigned 64-bit integers, allowing 64 candidates to be packed into a single word.
 
     Let $m$ denote the length of the text.
     To represent candidate positions for a query of any length, we require
     \[
-        \left\lceil \frac{m + 63}{64} \right\rceil
+        h = \left\lceil \frac{m + 63}{64} \right\rceil
     \]
     64-bit words in the bitmask.
 
@@ -132,7 +133,7 @@ find_candidate_v1(const std::string &text,
 
     To set this bit, we construct a temporary value with only the target bit active by shifting the integer constant $1$ to the left by the bit position $b$, and then update the mask word using the bitwise OR:
     \[
-        B_w \gets B_w \,\lor\, (1 \ll b).
+        B_w \gets B_w \,|\, (1 \ll b).
     \]
 
     To reconstruct candidate positions from the bitmask, we iterate over all 64-bit words and extract the indices of the set bits.
@@ -161,6 +162,31 @@ find_candidate_v1(const std::string &text,
     This approach ensures that candidate extraction runs in time proportional to the number of valid candidates rather than the size of the bitmask.
 
     \subsubsection{Using a Bitmask for All Queries Together}
+    Instead of allocating a separate bitmask for each query and clearing it after processing, we can allocate a single bitmask large enough to store candidate positions for \emph{all queries} simultaneously.
+
+    For $n$ queries, the total bitmask size becomes
+    \[
+        h_{\text{total}} = n \cdot h,
+    \]
+    where $h$ is the number of 64-bit words needed for a single query.
+
+    To access the word corresponding to a candidate at position $k$ for query $q$, we first compute the offset for that query:
+    \[
+        l = q \cdot h.
+    \]
+    The global word index in the combined bitmask is then
+    \[
+        w_{\text{total}} = l + (k \gg 6),
+    \]
+    where, as before, $k \gg 6$ gives the word index within the query's portion of the bitmask.
+
+    Reconstructing candidate positions proceeds in a similar manner.
+    We iterate over all queries $q$, and within each query, over all words $w$ from $0$ to $h-1$.
+    For each word index, the offset-adjusted index is
+    \[
+        w_{\text{total}} = l + w.
+    \]
+    Candidate positions are then extracted from the set bits of $B_{w_{\text{total}}}$ using the same approach described previously.
 
     \subsection{Rolling-Hash Approach}
 

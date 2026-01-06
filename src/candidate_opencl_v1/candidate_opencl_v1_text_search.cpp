@@ -145,7 +145,7 @@ find_candidate_opencl_v1(const std::string &text,
 
     std::vector<std::vector<size_t>> final_indices(num_queries);
     for (int i = 0; i < num_queries; i++) {
-        //std::cout << "Final counts: " << final_counts[i] << std::endl;
+        // std::cout << "Final counts: " << final_counts[i] << std::endl;
         int count = std::min(final_counts[i], max_matches);
         for (int j = 0; j < count; j++) {
             final_indices[i].push_back(all_results[i * max_matches + j]);
