@@ -23,6 +23,7 @@ add_executable(text-search-test
         src/candidate_opencl_v1/candidate_opencl_v1_text_search.cpp
         src/candidate_opencl_v2/candidate_opencl_v2_text_search.cpp
         src/candidate_opencl_v3/candidate_opencl_v3_text_search.cpp
+        src/hash_openmp_v1/hash_openmp_v1_text_search.cpp
         src/std/std_text_search.cpp
         src/hash/hash_text_search.cpp)
 

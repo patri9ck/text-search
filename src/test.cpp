@@ -9,6 +9,7 @@
 #include "candidate_v4/candidate_v4_text_search.h"
 #include "cxxopts.hpp"
 #include "hash/hash_text_search.h"
+#include "hash_openmp_v1/hash_openmp_v1_text_search.h"
 #include "std/std_text_search.h"
 #include "util.h"
 
@@ -144,6 +145,9 @@ int main(const int argc, char **argv) {
     } else if (implementation == "candidate_opencl_v3") {
         find = find_candidate_opencl_v3;
         timer = &candidate_opencl_v3_timer;
+    } else if (implementation == "hash_openmp_v1") {
+        find = find_hash_openmp_v1;
+        timer = &hash_openmp_v1_timer;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
