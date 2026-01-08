@@ -20,9 +20,11 @@ improvemnts from v1 to v3
 - instead of each queries getting its own memory of 5 mio. slots we use a global memory of 20 million slots
   we safe lots of memory
 - define local workgroup size to 256 threads
+- using openMPI for sorting the results
+- one list for the actual results and one for the query ids
 
 v1: ca. 3.2 sekunden
-v3 ca. 2.5 sekunden
+v3 ca. 2.2 sekunden
 
 idee:
 use local memory to avoid reading everytime form slower global memory

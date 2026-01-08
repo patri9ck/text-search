@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <omp.h>
 
 #ifdef BENCHMARK
 Timer candidate_opencl_v3_timer = Timer(std::string("candidate_opencl_v3"));
@@ -154,8 +155,7 @@ find_candidate_opencl_v3(const std::string &text,
         final_indices[h_qids[i]].push_back((size_t)h_indices[i]);
     }
 
-    // WICHTIG: Die GPU liefert die Indizes unsortiert. std::find erwartet sie
-    // sortiert.
+#pragma omp parallel for
     for (int q = 0; q < num_queries; q++) {
         std::sort(final_indices[q].begin(), final_indices[q].end());
     }
