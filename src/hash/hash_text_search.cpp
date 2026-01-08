@@ -67,15 +67,14 @@ find_hash(const std::string &text, const std::vector<std::string> &queries) {
         for (size_t j = 1; j <= text_length - m; ++j) {
             match = true;
 
-            window_hash -= static_cast<uint64_t>(text[j - 1]) * power;
+            window_hash -= static_cast<uint64_t>(static_cast<uint8_t>(text[j - 1])) * power;
             window_hash *= PRIME;
-            window_hash += text[j + m - 1];
+            window_hash += static_cast<uint8_t>(text[j + m - 1]);
 
             if (window_hash == query_hash) {
                 for (size_t k = 0; k < m; ++k) {
                     if (text[k + j] != query[k]) {
                         match = false;
-
                         break;
                     }
                 }

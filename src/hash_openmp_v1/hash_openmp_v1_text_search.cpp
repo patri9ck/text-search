@@ -87,9 +87,11 @@ find_hash_openmp_v1(const std::string &text, const std::vector<std::string> &que
         for (size_t j = 0; j <= text_length - current_len; ++j) {
             auto it = hash_to_queries.find(window_hash);
             if (it != hash_to_queries.end()) {
-                // Monte Carlo: Wir vertrauen dem Hash blind
+
                 for (size_t q_idx : it->second) {
-                    indices[q_idx].push_back(j);
+                    if (text.compare(j, current_len, queries[q_idx]) == 0) {
+                        indices[q_idx].push_back(j);
+                    }
                 }
             }
 
