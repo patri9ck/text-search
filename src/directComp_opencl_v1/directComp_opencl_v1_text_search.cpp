@@ -1,4 +1,4 @@
-#include "candidate_opencl_v1_text_search.h"
+#include "directComp_opencl_v1_text_search.h"
 
 #include <CL/opencl.h>
 #include <algorithm>
@@ -7,7 +7,7 @@
 #include <vector>
 
 #ifdef BENCHMARK
-Timer candidate_opencl_v1_timer = Timer(std::string("candidate_opencl_v1"));
+Timer direct_compare_opencl_v1_timer = Timer(std::string("directComp_opencl_v1"));
 #endif
 
 // Helper to check for OpenCL errors
@@ -56,7 +56,7 @@ static const char *kernel_source =
     "}\n";
 
 std::vector<std::vector<size_t>>
-find_candidate_opencl_v1(const std::string &text,
+direct_compare_opencl_v1(const std::string &text,
                          const std::vector<std::string> &queries) {
     cl_int err;
     int num_queries = (int)queries.size();

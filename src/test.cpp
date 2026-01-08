@@ -1,6 +1,7 @@
-#include "candidate_opencl_v1/candidate_opencl_v1_text_search.h"
+#include "directComp_opencl_v1/directComp_opencl_v1_text_search.h"
+#include "directComp_opencl_v2/directComp_opencl_v2_text_search.h"
+#include "directComp_opencl_v3/directComp_opencl_v3_text_search.h"
 #include "candidate_opencl_v2/candidate_opencl_v2_text_search.h"
-#include "candidate_opencl_v3/candidate_opencl_v3_text_search.h"
 #include "candidate_openmp_v1/candidate_openmp_v1_text_search.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search.h"
 #include "candidate_v1/candidate_v1_text_search.h"
@@ -136,15 +137,18 @@ int main(const int argc, char **argv) {
     } else if (implementation == "candidate_openmp_v2") {
         find = find_candidate_openmp_v2;
         timer = &candidate_openmp_v2_timer;
-    } else if (implementation == "candidate_opencl_v1") {
-        find = find_candidate_opencl_v1;
-        timer = &candidate_opencl_v1_timer;
+    } else if (implementation == "directComp_opencl_v1") {
+        find = direct_compare_opencl_v1;
+        timer = &direct_compare_opencl_v1_timer;
     } else if (implementation == "candidate_opencl_v2") {
         find = find_candidate_opencl_v2;
         timer = &candidate_opencl_v2_timer;
-    } else if (implementation == "candidate_opencl_v3") {
-        find = find_candidate_opencl_v3;
-        timer = &candidate_opencl_v3_timer;
+    } else if (implementation == "directComp_opencl_v2") {
+        find = direct_compare_opencl_v2;
+        timer = &direct_compare_opencl_v2_timer;
+    } else if (implementation == "directComp_opencl_v3") {
+        find = direct_compare_opencl_v3;
+        timer = &direct_compare_opencl_v3_timer;
     } else if (implementation == "hash_openmp_v1") {
         find = find_hash_openmp_v1;
         timer = &hash_openmp_v1_timer;
