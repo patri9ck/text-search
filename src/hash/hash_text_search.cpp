@@ -20,7 +20,9 @@ uint64_t compute_power(size_t length) {
     return p;
 }
 
-} // namespace
+}
+
+
 
 std::vector<std::vector<size_t>>
 find_hash(const std::string &text, const std::vector<std::string> &queries) {

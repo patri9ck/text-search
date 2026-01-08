@@ -8,7 +8,7 @@ add_executable(text-search src/main.cpp
         src/std/std_text_search.cpp
         src/hash/hash_text_search.cpp
         src/util.cpp
-        src/candidate_opencl_v1/candidate_opencl_v1_text_search.cpp)
+        src/directComp_opencl_v1/directComp_opencl_v1_text_search.cpp)
 
 add_executable(text-search-test
         src/test.cpp
@@ -20,9 +20,11 @@ add_executable(text-search-test
         src/candidate_v4/candidate_v4_text_search.cpp
         src/candidate_openmp_v1/candidate_openmp_v1_text_search.cpp
         src/candidate_openmp_v2/candidate_openmp_v2_text_search.cpp
-        src/candidate_opencl_v1/candidate_opencl_v1_text_search.cpp
+        src/directComp_opencl_v1/directComp_opencl_v1_text_search.cpp
+        src/directComp_opencl_v2/directComp_opencl_v2_text_search.cpp
+        src/directComp_opencl_v3/directComp_opencl_v3_text_search.cpp
         src/candidate_opencl_v2/candidate_opencl_v2_text_search.cpp
-        src/candidate_opencl_v3/candidate_opencl_v3_text_search.cpp
+        src/hash_openmp_v1/hash_openmp_v1_text_search.cpp
         src/std/std_text_search.cpp
         src/hash/hash_text_search.cpp)
 

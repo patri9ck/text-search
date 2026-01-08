@@ -1,13 +1,14 @@
-#include "candidate_opencl_v3_text_search.h"
+#include "directComp_opencl_v3_text_search.h"
 
 #include <CL/opencl.h>
 #include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <omp.h>
 
 #ifdef BENCHMARK
-Timer candidate_opencl_v3_timer = Timer(std::string("candidate_opencl_v3"));
+Timer direct_compare_opencl_v3_timer = Timer(std::string("directComp_opencl_v3"));
 #endif
 
 // Helper to check for OpenCL errors
@@ -57,7 +58,7 @@ __kernel void multi_search(
 )raw";
 
 std::vector<std::vector<size_t>>
-find_candidate_opencl_v3(const std::string &text,
+direct_compare_opencl_v3(const std::string &text,
                          const std::vector<std::string> &queries) {
     cl_int err;
     int num_queries = (int)queries.size();
@@ -152,12 +153,6 @@ find_candidate_opencl_v3(const std::string &text,
     std::vector<std::vector<size_t>> final_indices(num_queries);
     for (int i = 0; i < actual_read; i++) {
         final_indices[h_qids[i]].push_back((size_t)h_indices[i]);
-    }
-
-    // WICHTIG: Die GPU liefert die Indizes unsortiert. std::find erwartet sie
-    // sortiert.
-    for (int q = 0; q < num_queries; q++) {
-        std::sort(final_indices[q].begin(), final_indices[q].end());
     }
 
     // --- Cleanup ---
