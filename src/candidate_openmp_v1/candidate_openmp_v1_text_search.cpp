@@ -42,10 +42,6 @@ find_candidate_openmp_v1(const std::string &text,
 
     omp_set_num_threads(max_threads);
 
-#ifdef BENCHMARK
-    std::cout << "Using " << max_threads << " threads." << std::endl;
-#endif
-
     std::vector<std::vector<size_t>> indices(queries.size());
 
 #pragma omp parallel for default(none) shared(queries, indices, text)

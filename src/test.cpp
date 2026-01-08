@@ -99,7 +99,8 @@ int main(const int argc, char **argv) {
             cxxopts::value<size_t>()->default_value("0"))(
             "m", "limit files to m",
             cxxopts::value<size_t>()->default_value("0"))(
-            "c,compare", "compare with std", cxxopts::value<bool>());
+            "c,compare", "compare with std", cxxopts::value<bool>())(
+            "r,raw", "only print time", cxxopts::value<bool>());
 
     const auto result = options.parse(argc, argv);
 
@@ -154,12 +155,14 @@ int main(const int argc, char **argv) {
         return 1;
     }
 
+    bool raw = result["raw"].as<bool>();
+
     std::vector<std::string> queries;
 
     auto files = result["file"].as<std::vector<std::string>>();
 
     for (auto &file : files) {
-        auto content = read_file(file);
+        auto content = read_file(file, raw);
 
         if (content) {
             std::istringstream iss(*content);
@@ -186,7 +189,9 @@ int main(const int argc, char **argv) {
 
     queries.resize(n);
 
-    std::cout << "There are " << queries.size() << " queries." << std::endl;
+    if (!raw) {
+        std::cout << "There are " << queries.size() << " queries." << std::endl;
+    }
 
     if (!result.count("directory")) {
         std::cerr << "Please specify at least one directory.";
@@ -199,10 +204,12 @@ int main(const int argc, char **argv) {
     auto directories = result["directory"].as<std::vector<std::string>>();
 
     for (auto &directory : directories) {
-        auto contents = read_directory(directory);
+        auto contents = read_directory(directory, raw);
 
         for (auto &[file, content] : contents) {
-            std::cout << "Read file " << file << std::endl;
+            if (!raw) {
+                std::cout << "Read file " << file << std::endl;
+            }
 
             texts.push_back(content);
         }
@@ -222,21 +229,31 @@ int main(const int argc, char **argv) {
         total += texts[i];
     }
 
-    std::cout << "Assembled all " << m << " texts to one of size "
+    if (!raw) {
+        std::cout << "Assembled all " << m << " texts to one of size "
               << total.length() << std::endl;
+    }
 
     timer->start_total();
     auto results = find(total, queries);
     timer->stop_total();
 
-    timer->print();
+    if (raw) {
+        std::cout << timer->get_total_time() << std::endl;
+    } else {
+        timer->print();
+    }
 
     if (result["compare"].as<bool>()) {
         std_timer.start_total();
         auto std_results = find_std(total, queries);
         std_timer.stop_total();
 
-        std_timer.print();
+        if (raw) {
+            std::cout << std_timer.get_total_time() << std::endl;
+        } else {
+            std_timer.print();
+        }
 
         compare_results(std_results, results, queries, implementation);
     }

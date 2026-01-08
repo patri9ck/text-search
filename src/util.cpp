@@ -5,10 +5,12 @@
 #include <iostream>
 #include <sstream>
 
-std::optional<std::string> read_file(const std::string &path) {
+std::optional<std::string> read_file(const std::string &path, bool silent) {
     std::ifstream f(path, std::ios::binary);
     if (!f.is_open()) {
-        std::cerr << "Failed to open file: " << path << std::endl;
+        if (!silent) {
+            std::cerr << "Failed to open file: " << path << std::endl;
+        }
         return std::nullopt;
     }
 
@@ -16,14 +18,17 @@ std::optional<std::string> read_file(const std::string &path) {
     buffer << f.rdbuf();
 
     if (f.fail() && !f.eof()) {
-        std::cerr << "Error while reading file: " << path << std::endl;
+        if (!silent) {
+            std::cerr << "Error while reading file: " << path << std::endl;
+        }
         return std::nullopt;
     }
 
     return buffer.str();
 }
 
-std::map<std::string, std::string> read_directory(const std::string &path) {
+std::map<std::string, std::string> read_directory(const std::string &path,
+                                                  bool silent) {
     std::map<std::string, std::string> contents;
 
     try {
@@ -34,7 +39,7 @@ std::map<std::string, std::string> read_directory(const std::string &path) {
                 if (content) {
                     contents[entry.path().string()] = *content;
                 }
-            } else {
+            } else if (!silent) {
                 std::cout << entry.path()
                           << " is not a regular file, skipping..." << std::endl;
             }
