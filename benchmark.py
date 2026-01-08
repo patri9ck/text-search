@@ -4,10 +4,10 @@ import numpy as np
 
 # --- KONFIGURATION ---
 # Note: Ensure the path is correct for your OS (Windows uses .exe)
-EXECUTABLE = "/cmake-build-release/text-search-test.exe"
+EXECUTABLE = "./cmake-build-release/text-search-test.exe"
 ITERATIONS = 10
-QUERIES_FILE = "common-words.txt"
-DATA_DIR = "data"
+QUERIES_FILE = "../common-words.txt"
+DATA_DIR = "../data"
 IMPLEMENTATIONS = [
     "candidate_v1", "candidate_v2", "candidate_v3", "candidate_v4",
     "hash", "candidate_openmp_v1", "candidate_openmp_v2",
