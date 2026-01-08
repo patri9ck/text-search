@@ -8,7 +8,7 @@
 #include <omp.h>
 
 #ifdef BENCHMARK
-Timer direct_compare_opencl_v3_timer = Timer(std::string("directComp_opencl_v2"));
+Timer direct_compare_opencl_v3_timer = Timer(std::string("directComp_opencl_v3"));
 #endif
 
 // Helper to check for OpenCL errors
