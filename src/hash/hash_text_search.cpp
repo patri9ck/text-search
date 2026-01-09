@@ -22,8 +22,6 @@ uint64_t compute_power(size_t length) {
 
 }
 
-
-
 std::vector<std::vector<size_t>>
 find_hash(const std::string &text, const std::vector<std::string> &queries) {
     std::vector<std::vector<size_t>> indices(queries.size());
@@ -72,14 +70,7 @@ find_hash(const std::string &text, const std::vector<std::string> &queries) {
             window_hash += static_cast<uint8_t>(text[j + m - 1]);
 
             if (window_hash == query_hash) {
-                for (size_t k = 0; k < m; ++k) {
-                    if (text[k + j] != query[k]) {
-                        match = false;
-                        break;
-                    }
-                }
-
-                if (match) {
+                if (text.compare(j, m, query) == 0) {
                     indices[i].push_back(j);
                 }
             }
