@@ -10,7 +10,7 @@ QUERIES_FILE = "../common-words.txt"
 DATA_DIR = "../data"
 IMPLEMENTATIONS = [
     "candidate_v1", "candidate_v2", "candidate_v3", "candidate_v4",
-    "hash", "candidate_openmp_v1", "candidate_openmp_v2",
+    "hash_v1", "candidate_openmp_v1", "candidate_openmp_v2",
     "directComp_opencl_v1", "candidate_opencl_v2", "directComp_opencl_v3",
     "hash_openmp_v1"
 ]

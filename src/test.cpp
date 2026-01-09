@@ -9,8 +9,10 @@
 #include "candidate_v3/candidate_v3_text_search.h"
 #include "candidate_v4/candidate_v4_text_search.h"
 #include "cxxopts.hpp"
-#include "hash/hash_text_search.h"
+#include "hash_v1/hash_v1_text_search.h"
+#include "hash_v2/hash_v2_text_search.h"
 #include "hash_openmp_v1/hash_openmp_v1_text_search.h"
+#include "naive_v1/naive_v1_text_search.h"
 #include "std/std_text_search.h"
 #include "util.h"
 
@@ -129,9 +131,12 @@ int main(const int argc, char **argv) {
     } else if (implementation == "candidate_v4") {
         find = find_candidate_v4;
         timer = &candidate_v4_timer;
-    } else if (implementation == "hash") {
-        find = find_hash;
-        timer = &hash_timer;
+    } else if (implementation == "hash_v1") {
+        find = hash_v1;
+        timer = &hash_v1_timer;
+    } else if (implementation == "hash_v2") {
+        find = hash_v2;
+        timer = &hash_v2_timer;
     } else if (implementation == "candidate_openmp_v1") {
         find = find_candidate_openmp_v1;
         timer = &candidate_openmp_v1_timer;
@@ -153,6 +158,9 @@ int main(const int argc, char **argv) {
     } else if (implementation == "hash_openmp_v1") {
         find = find_hash_openmp_v1;
         timer = &hash_openmp_v1_timer;
+    } else if (implementation == "naive_v1") {
+        find = naive_v1;
+        timer = &naive_v1_timer;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
