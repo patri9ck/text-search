@@ -1,13 +1,13 @@
-#include "hash_text_search.h"
+#include "hash_v1_text_search.h"
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
-#define PRIME 131
+#define PRIME 1000003
 
 #ifdef BENCHMARK
-Timer hash_timer = Timer(std::string("hash"));
+Timer hash_v1_timer = Timer(std::string("hash_v1"));
 #endif
 
 namespace {
@@ -22,10 +22,8 @@ uint64_t compute_power(size_t length) {
 
 }
 
-
-
 std::vector<std::vector<size_t>>
-find_hash(const std::string &text, const std::vector<std::string> &queries) {
+hash_v1(const std::string &text, const std::vector<std::string> &queries) {
     std::vector<std::vector<size_t>> indices(queries.size());
 
     auto text_length = text.length();
@@ -72,14 +70,7 @@ find_hash(const std::string &text, const std::vector<std::string> &queries) {
             window_hash += static_cast<uint8_t>(text[j + m - 1]);
 
             if (window_hash == query_hash) {
-                for (size_t k = 0; k < m; ++k) {
-                    if (text[k + j] != query[k]) {
-                        match = false;
-                        break;
-                    }
-                }
-
-                if (match) {
+                if (memcmp(&text[j], query.data(), m) == 0) {
                     indices[i].push_back(j);
                 }
             }

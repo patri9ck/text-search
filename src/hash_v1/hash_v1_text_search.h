@@ -6,10 +6,10 @@
 
 #ifdef BENCHMARK
     #include "../timer.h"
-extern Timer hash_timer;
+extern Timer hash_v1_timer;
 #endif
 
 std::vector<std::vector<size_t>>
-find_hash(const std::string &text, const std::vector<std::string> &queries);
+hash_v1(const std::string &text, const std::vector<std::string> &queries);
 
 #endif

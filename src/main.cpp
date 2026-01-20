@@ -1,6 +1,6 @@
 #include "candidate_v3/candidate_v3_text_search.h"
 #include "cxxopts.hpp"
-#include "hash/hash_text_search.h"
+#include "hash/hash_v1_text_search.h"
 #include "std/std_text_search.h"
 #include "util.h"
 
@@ -10,7 +10,7 @@ int main(const int argc, char **argv) {
     cxxopts::Options options("text-search", "Search for words in big texts");
 
     options.add_options()(
-        "i,implementation", "implementation: candidate, std, hash, opencl",
+        "i,implementation", "implementation: candidate, std, hash_v1, opencl",
         cxxopts::value<std::string>()->default_value("candidate"))(
         "f,file", "file to search in",
         cxxopts::value<std::vector<std::string>>())(
@@ -38,8 +38,8 @@ int main(const int argc, char **argv) {
 
     if (implementation == "candidate") {
         find = find_candidate_v3;
-    } else if (implementation == "hash") {
-        find = find_hash;
+    } else if (implementation == "hash_v1") {
+        find = hash_v1;
     } else if (implementation == "std") {
         find = find_std;
     } else if (implementation == "opencl") {

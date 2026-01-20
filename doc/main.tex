@@ -7,29 +7,6 @@
 \usepackage{amssymb}
 \usepackage{xcolor}
 
-\lstdefinestyle{darkcpp}{
-    backgroundcolor=\color{black},
-    basicstyle=\ttfamily\small\color{white},
-    keywordstyle=\color{cyan},
-    stringstyle=\color{orange},
-    commentstyle=\color{gray},
-    numberstyle=\tiny\color{gray},
-    numbers=left,
-    stepnumber=1,
-    numbersep=10pt,
-    showstringspaces=false,
-    breaklines=true,
-    breakatwhitespace=true,
-    frame=single,
-    rulecolor=\color{white},
-    tabsize=2,
-    captionpos=b
-}
-
-\lstset{
-    style=darkcpp,
-    language=C++
-}
 
 \title{Parallel Text Search}
 \author{
@@ -217,7 +194,7 @@ find_candidate_v1(const std::string &text,
 
     \subsection{Rolling Hash Approach Rabin-Karp Algorithm}
 
-    Assume we are searching for the word \textbf{"hello"} in a large text with millions of characters. Using a naive approach, one would have to check up to all 5 characters for every single position in the text. This results in a time complexity of:
+    Assume we are searching for the word \textbf{"hello"} in a large text with millions of characters. Using a naive approach, we would have to check up to all 5 characters for every single position in the text. This results in a time complexity of:
     \[ O(N \cdot M) \]
     where:
     \begin{itemize}
@@ -225,39 +202,69 @@ find_candidate_v1(const std::string &text,
         \item $M = \text{Length of the searched word (query)}$
     \end{itemize}
 
-    If we search for $P$ different words, the complexity multiplies by the number of queries, resulting in $O(N \cdot M \cdot P)$. To avoid comparing every single character for every shift, we convert the search terms into a numerical value, known as a \textbf{hash value}:
+    To avoid comparing every single character for every shift, we convert the search terms into a numerical value and compare them directly.
+    Time complexity of calculating the Hash is
+    \[ O(M) \]
+    This results in an \textbf{average} time complexity of
+    \[ O(N + M) \]
+    If unlikely, every hit leads to a hash collision the \textbf{worst-case} time complexity of
+    \[ O(N \cdot M) \]
+
+    Calculation of the query \textbf{hash value}:
     \[ \text{query\_hash} = q_0 \cdot B^{M-1} + q_1 \cdot B^{M-2} + \dots + q_{M-1} \cdot B^0 \]
-    where $B$ is a large prime number (\texttt{PRIME}) acting as the base, and $q_i$ is the numerical value of the character.
+    where $B$ is a prime number (\texttt{PRIME}) acting as the base, and $q_i$ is the numerical value of the character.
 
+    For a window of length M starting at position j in the text, the hash value is:
 
+    \[
+        \text{window\_hash}_j
+        = t_j \cdot B^{M-1}
+        + t_{j+1} \cdot B^{M-2}
+        + \cdots
+        + t_{j+M-1} \cdot B^0.
+    \]
 
     To ensure we do not have to recalculate the hash value from scratch for every position in the text, we use the \textbf{Rabin-Karp Rolling Hash} algorithm \cite{rabin-karp}:
 
+    The previous window hash is:
+    \[
+        \text{window\_hash}_{j-1}
+        = t_{j-1} \cdot B^{M-1}
+        + t_j \cdot B^{M-2}
+        + \cdots
+        + t_{j+M-2}.
+    \]
+
     \begin{enumerate}
         \item \textbf{Subtract} the most significant character:
-        \begin{lstlisting}[language=C++]
-    window_hash -= static_cast<uint64_t>(static_cast<uint8_t>(text[j - 1])) * power;
-        \end{lstlisting}
-
-        \item \textbf{Shift} the window:
-        \begin{lstlisting}[language=C++]
-    window_hash *= PRIME;
-        \end{lstlisting}
-
+        \[
+            \text{window\_hash}_{j-1}'
+            = \text{window\_hash}_{j-1}
+            - t_{j-1} \cdot B^{M-1}.
+        \]
+        \item \textbf{Shift} the window by multiplying with the PRIME:
+        \[
+            \text{window\_hash}_{j-1}''
+            = \text{window\_hash}_{j-1}' \cdot B.
+        \]
         \item \textbf{Add} the new character:
-        \begin{lstlisting}[language=C++]
-    window_hash += static_cast<uint8_t>(text[j + m - 1]);
-        \end{lstlisting}
+        \[
+            \text{window\_hash}_j
+            = \text{window\_hash}_{j-1}'' + t_{j+M-1}.
+        \]
     \end{enumerate}
 
-    Finally, we handle potential \textbf{hash collisions} (where different strings produce the same hash due to the $mod\ 2^{64}$ nature of \texttt{uint64\_t}) by verifying the match:
+    To make sure the actual text is equal to the query, we double-check with \texttt{text.compare()}. This Problem where two strings return the same hash-value is caused by the $mod\ 2^{64}$ nature of \texttt{uint64\_t} (no negative values).
 
-    \begin{lstlisting}[language=C++]
-    if (text[k + j] != query[k]) {
-        match = false;
-        break;
+
+    \begin{lstlisting}[language=C++, caption={Collision verification using \texttt{compare()}}, captionpos=b]
+    if (window_hash == query_hash) {
+        if (text.compare(j, m, query) == 0) {
+            indices[i].push_back(j);
+        }
     }
     \end{lstlisting}
+
 
 
     \subsection{Evaluation}

@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(text-search src/main.cpp
         src/candidate_v3/candidate_v3_text_search.cpp
         src/std/std_text_search.cpp
-        src/hash/hash_text_search.cpp
+        src/hash_v1/hash_v1_text_search.cpp
         src/util.cpp
         src/directComp_opencl_v1/directComp_opencl_v1_text_search.cpp)
 
@@ -26,7 +26,9 @@ add_executable(text-search-test
         src/candidate_opencl_v2/candidate_opencl_v2_text_search.cpp
         src/hash_openmp_v1/hash_openmp_v1_text_search.cpp
         src/std/std_text_search.cpp
-        src/hash/hash_text_search.cpp)
+        src/hash_v1/hash_v1_text_search.cpp
+        src/hash_v2/hash_v2_text_search.cpp
+        src/naive_v1/naive_v1_text_search.cpp)
 
 find_package(OpenCL REQUIRED)
 find_package(OpenMP REQUIRED)

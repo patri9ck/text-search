@@ -89,7 +89,7 @@ find_hash_openmp_v1(const std::string &text, const std::vector<std::string> &que
             if (it != hash_to_queries.end()) {
 
                 for (size_t q_idx : it->second) {
-                    if (text.compare(j, current_len, queries[q_idx]) == 0) {
+                    if (memcmp(&text[j], queries[q_idx].data(), current_len) == 0) {
                         indices[q_idx].push_back(j);
                     }
                 }
