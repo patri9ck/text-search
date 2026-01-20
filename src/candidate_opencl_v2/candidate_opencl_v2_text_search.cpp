@@ -9,14 +9,14 @@ Timer candidate_opencl_v2_timer = Timer(std::string("candidate_opencl_v2"));
 
 namespace {
 const char *kernel_src = R"(
-__kernel void find_candidates(
-    __global ulong *mask,
+__kernel void find_and_test_candidates(
+    __constant ulong *mask,
     ulong mask_words,
     __global const char *text,
     ulong text_length,
-    __global const char *flatten_queries,
-    __global const uint *query_offsets,
-    __global const uint *query_lengths,
+    __constant const char *flatten_queries,
+    __constant const uint *query_offsets,
+    __constant const uint *query_lengths,
     uint num_queries
 ) {
     const size_t i = get_global_id(0);
