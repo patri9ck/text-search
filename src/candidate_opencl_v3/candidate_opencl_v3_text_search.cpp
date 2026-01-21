@@ -17,13 +17,13 @@ const char *kernel_src = R"(
 __kernel void test_candidates(
     __global const char* text,
     uint text_length,
-    __global const char* flatten_queries,
-    __global const uint* query_offsets,
-    __global const uint* query_lengths,
+    __constant const char* flatten_queries,
+    __constant const uint* query_offsets,
+    __constant const uint* query_lengths,
     __global int* results,
     __global int* query_mappings,
     __global uint* counter,
-    uint max_total_results)
+    uint results_amount)
 {
     const size_t i = get_global_id(0);
     const size_t j = get_global_id(1);
@@ -60,7 +60,7 @@ __kernel void test_candidates(
         if (match) {
             int index = atomic_inc(counter);
 
-            if (index < max_total_results) {
+            if (index < results_amount) {
                 results[index] = i;
                 query_mappings[index] = j;
             }
@@ -104,8 +104,6 @@ find_candidate_opencl_v3(const std::string &text,
 
     std::vector<std::vector<size_t>> indices(query_amount);
 
-    constexpr uint32_t max_total_results = 20000000;
-
     cl_int err;
     cl_platform_id platform;
     cl_device_id device;
@@ -136,12 +134,45 @@ find_candidate_opencl_v3(const std::string &text,
     std::vector<uint32_t> query_offsets(query_amount);
     std::vector<uint32_t> query_lengths(query_amount);
 
+    cl_ulong max_alloc_size;
+    uint64_t total_estimate = 0;
+
+    opencl(clGetDeviceInfo(
+       device,
+       CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+       sizeof(cl_ulong),
+       &max_alloc_size,
+       nullptr
+   ), "clGetDeviceInfo");
+
     for (size_t i = 0; i < query_amount; ++i) {
+        const auto query_length = queries[i].length();
+
         query_offsets[i] = flatten_queries.size();
-        query_lengths[i] = queries[i].length();
+        query_lengths[i] = query_length;
         flatten_queries.insert(flatten_queries.end(), queries[i].begin(),
                                queries[i].end());
+
+        switch (query_length) {
+        case 1:
+            // https://en.wikipedia.org/wiki/Letter_frequency
+            total_estimate += text_length * 127 / 1000;
+            break;
+        case 2:
+            // https://en.wikipedia.org/wiki/Bigram
+            total_estimate += text_length * 356 / 10000;
+            break;
+        case 3:
+            // https://en.wikipedia.org/wiki/Trigram
+            total_estimate += text_length * 181 / 10000;
+            break;
+        default:
+            total_estimate += text_length * 1 / 1000;
+            break;
+        }
     }
+
+    uint32_t results_amount = std::min(total_estimate / 2, max_alloc_size / sizeof(uint32_t));
 
     const auto text_buffer =
         clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
@@ -165,12 +196,12 @@ find_candidate_opencl_v3(const std::string &text,
 
     const auto results_buffer =
         clCreateBuffer(context, CL_MEM_READ_WRITE,
-                       max_total_results * sizeof(uint32_t), nullptr, &err);
+                       results_amount * sizeof(uint32_t), nullptr, &err);
     opencl(err, "clCreateBuffer results_buffer");
 
     const auto query_mappings_buffer =
         clCreateBuffer(context, CL_MEM_READ_WRITE,
-                       max_total_results * sizeof(uint32_t), nullptr, &err);
+                       results_amount * sizeof(uint32_t), nullptr, &err);
     opencl(err, "clCreateBuffer query_mappings_buffer");
 
     uint32_t zero = 0;
@@ -186,7 +217,7 @@ find_candidate_opencl_v3(const std::string &text,
     clSetKernelArg(kernel, 5, sizeof(cl_mem), &results_buffer);
     clSetKernelArg(kernel, 6, sizeof(cl_mem), &query_mappings_buffer);
     clSetKernelArg(kernel, 7, sizeof(cl_mem), &counter_buf);
-    clSetKernelArg(kernel, 8, sizeof(uint32_t), &max_total_results);
+    clSetKernelArg(kernel, 8, sizeof(uint32_t), &results_amount);
 
     constexpr size_t local_size = 256;
 
