@@ -5,11 +5,11 @@
 #include <vector>
 
 #ifdef BENCHMARK
-#include "../timer.h"
+    #include "../timer.h"
 extern Timer hash_v2_timer;
 #endif
 
 std::vector<std::vector<size_t>>
-hash_v2(const std::string &text, const std::vector<std::string> &queries);
+find_hash_v2(const std::string &text, const std::vector<std::string> &queries);
 
-#endif //TEXT_SEARCH_HASH_V2_TEXT_SEARCH_H
+#endif // TEXT_SEARCH_HASH_V2_TEXT_SEARCH_H

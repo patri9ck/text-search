@@ -1,7 +1,12 @@
 #include "candidate_opencl_v2_text_search.h"
 
 #include <CL/cl.h>
+#include <algorithm>
 #include <cstring>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #ifdef BENCHMARK
 Timer candidate_opencl_v2_timer = Timer(std::string("candidate_opencl_v2"));
@@ -9,225 +14,280 @@ Timer candidate_opencl_v2_timer = Timer(std::string("candidate_opencl_v2"));
 
 namespace {
 const char *kernel_src = R"(
-__kernel void find_and_test_candidates(
-    __constant ulong *mask,
-    ulong mask_words,
+__kernel void count_and_test_candidates(
     __global const char *text,
-    ulong text_length,
+    __global uint* counts,
+    __global uint* results,
+    uint text_length,
     __constant const char *flatten_queries,
     __constant const uint *query_offsets,
     __constant const uint *query_lengths,
-    uint num_queries
+    __global const uint *result_offsets,
+    uint mode
 ) {
     const size_t i = get_global_id(0);
     const size_t j = get_global_id(1);
 
+    if (i >= text_length) {
+        return;
+    }
+
     const uint query_offset = query_offsets[j];
     const uint query_length = query_lengths[j];
+
+    if (i + query_length > text_length) {
+        return;
+    }
 
     const uint mid = query_length >> 1;
     const uint end = query_length - 1;
 
-    if (i + end >= text_length) {
-        return;
-    }
+    bool candidate = text[i] == flatten_queries[query_offset] &&
+                     text[i + mid] == flatten_queries[query_offset + mid] &&
+                     text[i + end] == flatten_queries[query_offset + end];
 
-    if (text[i] == flatten_queries[query_offset] &&
-        text[i + mid] == flatten_queries[query_offset + mid] &&
-        text[i + end] == flatten_queries[query_offset + end]) {
+    if (candidate) {
+        const uint index = j * get_num_groups(0) + get_group_id(0);
 
-        atom_or(&mask[j * mask_words + (i / 64)], (ulong)1 << (i % 64));
-    }
-}
+        if (mode == 1) {
+            atomic_inc(&counts[index]);
+        } else {
+            bool match = true;
 
-__kernel void test_candidates(
-    __global const ulong *mask,
-    ulong mask_words,
-    __global const char *text,
-    ulong text_length,
-    __global const char *flatten_queries,
-    __global const uint *query_offsets,
-    __global const uint *query_lengths,
-    uint num_queries,
-    __global uint *results_size,
-    __global ulong *results,
-) {
-    const size_t i = get_global_id(0);
-    const size_t j = get_global_id(1);
+            for (uint k = 1; k < query_length - 1; ++k) {
+                if (k == mid) {
+                    continue;
+                }
 
-    const uint query_offset = query_offsets[j];
-    const uint query_length = query_lengths[j];
+                if (text[i + k] != flatten_queries[query_offset + k]) {
+                    match = false;
 
-    ulong w = mask[j * mask_words + i];
+                    break;
+                }
+            }
 
-    while (w != 0) {
-        ulong index = i * 64 + ctz(w);
+            if (match) {
+                uint count = atomic_inc(&counts[index]);
 
-        for (uint k = 0; k < query_length; ++k) {
-            if (text[index + k] != flatten_queries[query_offset + k]) {
-                w &= (w - 1);
-
-                return;
+                results[result_offsets[index] + count] = (uint)i;
             }
         }
-
-        match_indices[query_id * max_matches_per_query + atomic_inc(&match_counts[j])] = index;
-
-        w &= (w - 1);
     }
 }
 )";
+
+void opencl(const cl_int err, const char *function,
+            const cl_program &program = nullptr,
+            const cl_device_id &device = nullptr) {
+    if (err != CL_SUCCESS) {
+        std::stringstream ss;
+
+        ss << "opencl error: " << function << std::endl;
+
+        if (std::strcmp(function, "clBuildProgram") == 0 &&
+            program != nullptr && device != nullptr) {
+            size_t log_size;
+            clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0,
+                                  nullptr, &log_size);
+            std::vector<char> log(log_size);
+            clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG,
+                                  log_size, log.data(), nullptr);
+            ss << log.data();
+        }
+
+        const auto s = ss.str();
+
+        throw std::runtime_error(s);
+    }
+}
 } // namespace
 
 std::vector<std::vector<size_t>>
 find_candidate_opencl_v2(const std::string &text,
                          const std::vector<std::string> &queries) {
-    std::vector<std::vector<size_t>> indices(queries.size());
-
-    unsigned long mask_words = (text.length() + 63) / 64;
-    auto *mask = new uint64_t[mask_words * queries.size()]();
-
-    auto query_amount = queries.size();
-
-    std::vector<char> flatten_queries;
-
-    auto query_offsets = new uint32_t[query_amount];
-    auto query_lengths = new uint32_t[query_amount];
-
-    for (size_t i = 0; i < query_amount; ++i) {
-        const auto &query = queries[i];
-
-        query_offsets[i] = flatten_queries.size();
-        query_lengths[i] = query.length();
-
-        flatten_queries.insert(flatten_queries.end(), query.begin(),
-                               query.end());
-    }
-
+    const auto query_amount = queries.size();
     const auto text_length = text.length();
 
-    cl_platform_id platform;
-    clGetPlatformIDs(1, &platform, nullptr);
+    std::vector<std::vector<size_t>> indices(query_amount);
 
-    cl_device_id device;
-    clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, nullptr);
-    const auto context =
-        clCreateContext(nullptr, 1, &device, nullptr, nullptr, nullptr);
-
-    const auto queue =
-        clCreateCommandQueueWithProperties(context, device, nullptr, nullptr);
-
-    const auto program =
-        clCreateProgramWithSource(context, 1, &kernel_src, nullptr, nullptr);
-
-    clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr);
-
-    const auto find_candidates_kernel =
-        clCreateKernel(program, "find_candidates", nullptr);
-
-    const auto mask_buffer = clCreateBuffer(
-        context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-        mask_words * queries.size() * sizeof(uint64_t), mask, nullptr);
-
-    const auto text_buffer = clCreateBuffer(
-        context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, text.size(),
-        const_cast<void *>(static_cast<const void *>(text.data())), nullptr);
-
-    cl_mem queries_buffer =
-        clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                       flatten_queries.size(), flatten_queries.data(), nullptr);
-
-    cl_mem offsets_buffer =
-        clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                       query_amount * sizeof(uint32_t), query_offsets, nullptr);
-
-    cl_mem lengths_buffer =
-        clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                       query_amount * sizeof(uint32_t), query_lengths, nullptr);
-
-    clSetKernelArg(find_candidates_kernel, 0, sizeof(cl_mem), &mask_buffer);
-    clSetKernelArg(find_candidates_kernel, 1, sizeof(unsigned long),
-                   &mask_words);
-    clSetKernelArg(find_candidates_kernel, 2, sizeof(cl_mem), &text_buffer);
-    clSetKernelArg(find_candidates_kernel, 3, sizeof(size_t), &text_length);
-    clSetKernelArg(find_candidates_kernel, 4, sizeof(cl_mem), &queries_buffer);
-    clSetKernelArg(find_candidates_kernel, 5, sizeof(cl_mem), &offsets_buffer);
-    clSetKernelArg(find_candidates_kernel, 6, sizeof(cl_mem), &lengths_buffer);
-    clSetKernelArg(find_candidates_kernel, 7, sizeof(uint32_t), &query_amount);
-
-    size_t global_work_size[2] = {text_length, query_amount};
-
-    clEnqueueNDRangeKernel(queue, find_candidates_kernel, 2, nullptr,
-                           global_work_size, nullptr, 0, nullptr, nullptr);
-
-    clEnqueueReadBuffer(queue, mask_buffer, CL_TRUE, 0,
-                        mask_words * queries.size() * sizeof(uint64_t), mask, 0,
-                        nullptr, nullptr);
-
-    auto *results_size = new uint32_t[query_amount]();
-    auto *results = new uint64_t[text_length]();
-
-    cl_mem results_size_buffer =
-        clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR,
-                       query_amount * sizeof(uint32_t), results_size, nullptr);
-
-    cl_mem results_buffer =
-        clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR,
-                       query_amount * sizeof(uint64_t), results, nullptr);
-
-    const auto test_candidates_kernel =
-        clCreateKernel(program, "test_candidates", nullptr);
-
-    clSetKernelArg(test_candidates_kernel, 0, sizeof(cl_mem), &mask_buffer);
-    clSetKernelArg(test_candidates_kernel, 1, sizeof(unsigned long),
-                   &mask_words);
-    clSetKernelArg(test_candidates_kernel, 2, sizeof(cl_mem), &text_buffer);
-    clSetKernelArg(test_candidates_kernel, 3, sizeof(size_t), &text_length);
-    clSetKernelArg(test_candidates_kernel, 4, sizeof(cl_mem), &queries_buffer);
-    clSetKernelArg(test_candidates_kernel, 5, sizeof(cl_mem), &offsets_buffer);
-    clSetKernelArg(test_candidates_kernel, 6, sizeof(cl_mem), &lengths_buffer);
-    clSetKernelArg(test_candidates_kernel, 7, sizeof(uint32_t), &query_amount);
-    clSetKernelArg(test_candidates_kernel, 8, sizeof(cl_mem),
-                   &results_size_buffer);
-    clSetKernelArg(test_candidates_kernel, 9, sizeof(cl_mem), &results_buffer);
-
-    global_work_size[0] = mask_words;
-    global_work_size[1] = query_amount;
-
-    clEnqueueNDRangeKernel(queue, test_candidates_kernel, 2, nullptr,
-                           global_work_size, nullptr, 0, nullptr, nullptr);
-
-    clEnqueueReadBuffer(queue, mask_buffer, CL_TRUE, 0,
-                        mask_words * queries.size() * sizeof(uint64_t), mask, 0,
-                        nullptr, nullptr);
+    std::vector<char> flatten_queries;
+    std::vector<uint32_t> query_offsets(query_amount);
+    std::vector<uint32_t> query_lengths(query_amount);
 
     for (size_t i = 0; i < query_amount; ++i) {
-        uint32_t count = results_size[i];
+        query_offsets[i] = flatten_queries.size();
+        query_lengths[i] = queries[i].length();
+        flatten_queries.insert(flatten_queries.end(), queries[i].begin(),
+                               queries[i].end());
+    }
 
-        for (uint32_t j = 0; j < count; ++j) {
-            uint64_t index = results[i * text_length + j];
-            indices[i].push_back(index);
+    constexpr size_t local_size = 256;
+    const size_t group_amount = (text_length + local_size - 1) / local_size;
+
+    cl_platform_id platform;
+    cl_int err;
+    cl_device_id device;
+
+    const auto total_amount = group_amount * query_amount;
+    std::vector<uint32_t> counts(total_amount, 0);
+
+    const size_t global_work_size[2] = {group_amount * local_size,
+                                        query_amount};
+    constexpr size_t local_work_size[2] = {local_size, 1};
+
+    uint32_t mode = 1;
+
+    opencl(clGetPlatformIDs(1, &platform, nullptr), "clGetPlatformIDs");
+    opencl(clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, nullptr),
+           "glGetDeviceIDs");
+
+    const auto context =
+        clCreateContext(nullptr, 1, &device, nullptr, nullptr, &err);
+    opencl(err, "clCreateContext");
+
+    const auto queue =
+        clCreateCommandQueueWithProperties(context, device, nullptr, &err);
+    opencl(err, "clCreateCommandQueueWithProperties");
+
+    const auto program =
+        clCreateProgramWithSource(context, 1, &kernel_src, nullptr, &err);
+    opencl(err, "clCreateProgramWithSource");
+
+    opencl(clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr),
+           "clBuildProgram", program, device);
+
+    const auto kernel =
+        clCreateKernel(program, "count_and_test_candidates", &err);
+    opencl(err, "clCreateKernel");
+
+    const auto text_buffer =
+        clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                       text_length, const_cast<char *>(text.data()), &err);
+    opencl(err, "clCreateBuffer text");
+
+    const auto flatten_queries_buffer =
+        clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                       flatten_queries.size(), flatten_queries.data(), &err);
+    opencl(err, "clCreateBuffer flatten_queries");
+
+    const auto query_offsets_buffer = clCreateBuffer(
+        context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+        sizeof(uint32_t) * query_amount, query_offsets.data(), &err);
+    opencl(err, "clCreateBuffer query_offsets");
+
+    const auto query_lengths_buffer = clCreateBuffer(
+        context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+        sizeof(uint32_t) * query_amount, query_lengths.data(), &err);
+    opencl(err, "clCreateBuffer query_length");
+
+    const auto counts_buffer =
+        clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+                       total_amount * sizeof(uint32_t), counts.data(), &err);
+    opencl(err, "clCreateBuffer counts");
+
+    opencl(clSetKernelArg(kernel, 0, sizeof(cl_mem), &text_buffer),
+           "clSetKernelArg text");
+    opencl(clSetKernelArg(kernel, 1, sizeof(cl_mem), &counts_buffer),
+           "clSetKernelArg counts");
+    opencl(clSetKernelArg(kernel, 2, sizeof(cl_mem), nullptr),
+           "clSetKernelArg results");
+    opencl(clSetKernelArg(kernel, 3, sizeof(uint32_t), &text_length),
+           "clSetKernelArg text_length");
+    opencl(clSetKernelArg(kernel, 4, sizeof(cl_mem), &flatten_queries_buffer),
+           "clSetKernelArg flatten_queries");
+    opencl(clSetKernelArg(kernel, 5, sizeof(cl_mem), &query_offsets_buffer),
+           "clSetKernelArg query_offsets");
+    opencl(clSetKernelArg(kernel, 6, sizeof(cl_mem), &query_lengths_buffer),
+           "clSetKernelArg query_lengths");
+    opencl(clSetKernelArg(kernel, 7, sizeof(cl_mem), nullptr),
+           "clSetKernelArg result_offsets");
+    opencl(clSetKernelArg(kernel, 8, sizeof(uint32_t), &mode),
+           "clSetKernelArg mode");
+
+    opencl(clEnqueueNDRangeKernel(queue, kernel, 2, nullptr, global_work_size,
+                                  local_work_size, 0, nullptr, nullptr),
+           "clEnqueueNDRangeKernel");
+    opencl(clEnqueueReadBuffer(queue, counts_buffer, CL_TRUE, 0,
+                               counts.size() * sizeof(uint32_t), counts.data(),
+                               0, nullptr, nullptr),
+           "clEnqueueReadBuffer");
+
+    std::vector<uint32_t> result_offsets(total_amount, 0);
+
+    uint32_t total_matches = 0;
+
+    for (size_t i = 0; i < total_amount; ++i) {
+        result_offsets[i] = total_matches;
+
+        total_matches += counts[i];
+    }
+
+    const auto results_buffer = clCreateBuffer(
+        context, CL_MEM_WRITE_ONLY,
+        std::max(1U, total_matches) * sizeof(uint32_t), nullptr, &err);
+    opencl(err, "createBuffer results");
+
+    const auto result_offsets_buffer = clCreateBuffer(
+        context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+        total_amount * sizeof(uint32_t), result_offsets.data(), &err);
+    opencl(err, "createBuffer result_offsets");
+
+    mode = 0;
+
+    opencl(clSetKernelArg(kernel, 2, sizeof(cl_mem), &results_buffer),
+           "clSetKernelArg results");
+    opencl(clSetKernelArg(kernel, 7, sizeof(cl_mem), &result_offsets_buffer),
+           "result_offsets_buffer");
+    opencl(clSetKernelArg(kernel, 8, sizeof(uint32_t), &mode),
+           "clSetKernelArg mode");
+
+    constexpr uint32_t zero = 0;
+    opencl(clEnqueueFillBuffer(queue, counts_buffer, &zero, sizeof(uint32_t), 0,
+                               counts.size() * sizeof(uint32_t), 0, nullptr,
+                               nullptr),
+           "clEnqueueFillBuffer");
+    opencl(clEnqueueNDRangeKernel(queue, kernel, 2, nullptr, global_work_size,
+                                  local_work_size, 0, nullptr, nullptr),
+           "clEnqueueNDRangeKernel");
+
+    std::vector<uint32_t> results(total_matches);
+
+    if (total_matches > 0) {
+        opencl(clEnqueueReadBuffer(queue, results_buffer, CL_TRUE, 0,
+                                   total_matches * sizeof(uint32_t),
+                                   results.data(), 0, nullptr, nullptr),
+               "clEnqueueReadBuffer results");
+
+        opencl(clEnqueueReadBuffer(queue, counts_buffer, CL_TRUE, 0,
+                                   counts.size() * sizeof(uint32_t),
+                                   counts.data(), 0, nullptr, nullptr),
+               "clEnqueueReadBuffer counts");
+    }
+
+    for (size_t j = 0; j < query_amount; ++j) {
+        for (size_t k = 0; k < group_amount; ++k) {
+            const auto flat_index = j * group_amount + k;
+
+            const auto count = counts[flat_index];
+            const auto offset = result_offsets[flat_index];
+
+            for (uint32_t l = 0; l < count; ++l) {
+                indices[j].push_back(results[offset + l]);
+            }
         }
     }
 
-    clReleaseMemObject(mask_buffer);
     clReleaseMemObject(text_buffer);
-    clReleaseMemObject(queries_buffer);
-    clReleaseMemObject(offsets_buffer);
-    clReleaseMemObject(lengths_buffer);
-    clReleaseMemObject(results_size_buffer);
+    clReleaseMemObject(flatten_queries_buffer);
+    clReleaseMemObject(query_offsets_buffer);
+    clReleaseMemObject(query_lengths_buffer);
+    clReleaseMemObject(result_offsets_buffer);
+    clReleaseMemObject(counts_buffer);
     clReleaseMemObject(results_buffer);
-    clReleaseKernel(find_candidates_kernel);
-    clReleaseKernel(test_candidates_kernel);
+    clReleaseKernel(kernel);
     clReleaseProgram(program);
     clReleaseCommandQueue(queue);
     clReleaseContext(context);
-
-    delete[] mask;
-    delete[] query_offsets;
-    delete[] query_lengths;
-    delete[] results_size;
-    delete[] results;
 
     return indices;
 }

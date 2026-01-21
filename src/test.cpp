@@ -1,6 +1,4 @@
-#include "directComp_opencl_v1/directComp_opencl_v1_text_search.h"
-#include "directComp_opencl_v2/directComp_opencl_v2_text_search.h"
-#include "directComp_opencl_v3/directComp_opencl_v3_text_search.h"
+#include "candidate_opencl_v1/candidate_opencl_v1_text_search.h"
 #include "candidate_opencl_v2/candidate_opencl_v2_text_search.h"
 #include "candidate_openmp_v1/candidate_openmp_v1_text_search.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search.h"
@@ -9,10 +7,10 @@
 #include "candidate_v3/candidate_v3_text_search.h"
 #include "candidate_v4/candidate_v4_text_search.h"
 #include "cxxopts.hpp"
+#include "direct/direct_opencl_text_search.h"
+#include "hash_openmp_v1/hash_openmp_v1_text_search.h"
 #include "hash_v1/hash_v1_text_search.h"
 #include "hash_v2/hash_v2_text_search.h"
-#include "hash_openmp_v1/hash_openmp_v1_text_search.h"
-#include "naive_v1/naive_v1_text_search.h"
 #include "std/std_text_search.h"
 #include "util.h"
 
@@ -104,7 +102,8 @@ int main(const int argc, char **argv) {
             "m", "limit files to m",
             cxxopts::value<size_t>()->default_value("0"))(
             "c,compare", "compare with std", cxxopts::value<bool>())(
-            "r,raw", "only print time", cxxopts::value<bool>());
+            "r,raw", "only print time", cxxopts::value<bool>())("h,help",
+                                                                "Print help");
 
     const auto result = options.parse(argc, argv);
 
@@ -132,10 +131,10 @@ int main(const int argc, char **argv) {
         find = find_candidate_v4;
         timer = &candidate_v4_timer;
     } else if (implementation == "hash_v1") {
-        find = hash_v1;
+        find = find_hash_v1;
         timer = &hash_v1_timer;
     } else if (implementation == "hash_v2") {
-        find = hash_v2;
+        find = find_hash_v2;
         timer = &hash_v2_timer;
     } else if (implementation == "candidate_openmp_v1") {
         find = find_candidate_openmp_v1;
@@ -143,24 +142,18 @@ int main(const int argc, char **argv) {
     } else if (implementation == "candidate_openmp_v2") {
         find = find_candidate_openmp_v2;
         timer = &candidate_openmp_v2_timer;
-    } else if (implementation == "directComp_opencl_v1") {
-        find = direct_compare_opencl_v1;
-        timer = &direct_compare_opencl_v1_timer;
+    } else if (implementation == "candidate_opencl_v1") {
+        find = find_candidate_opencl_v1;
+        timer = &candidate_opencl_v1_timer;
     } else if (implementation == "candidate_opencl_v2") {
         find = find_candidate_opencl_v2;
         timer = &candidate_opencl_v2_timer;
-    } else if (implementation == "directComp_opencl_v2") {
-        find = direct_compare_opencl_v2;
-        timer = &direct_compare_opencl_v2_timer;
-    } else if (implementation == "directComp_opencl_v3") {
-        find = direct_compare_opencl_v3;
-        timer = &direct_compare_opencl_v3_timer;
+    } else if (implementation == "direct_opencl") {
+        find = find_direct_opencl;
+        timer = &direct_opencl_timer;
     } else if (implementation == "hash_openmp_v1") {
         find = find_hash_openmp_v1;
         timer = &hash_openmp_v1_timer;
-    } else if (implementation == "naive_v1") {
-        find = naive_v1;
-        timer = &naive_v1_timer;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
@@ -247,7 +240,7 @@ int main(const int argc, char **argv) {
 
     if (!raw) {
         std::cout << "Assembled all " << m << " texts to one of size "
-              << total.length() << std::endl;
+                  << total.length() << std::endl;
     }
 
     timer->start_total();

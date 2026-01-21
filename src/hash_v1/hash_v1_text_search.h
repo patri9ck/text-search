@@ -10,6 +10,6 @@ extern Timer hash_v1_timer;
 #endif
 
 std::vector<std::vector<size_t>>
-hash_v1(const std::string &text, const std::vector<std::string> &queries);
+find_hash_v1(const std::string &text, const std::vector<std::string> &queries);
 
 #endif

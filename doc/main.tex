@@ -191,16 +191,8 @@ find_candidate_v1(const std::string &text,
     \]
     Candidate positions are then extracted from the set bits of $B_{w_{\text{total}}}$ using the same approach described previously.
 
-
-    \subsection{Rolling Hash Approach Rabin-Karp Algorithm}
-
-    Assume we are searching for the word \textbf{"hello"} in a large text with millions of characters. Using a naive approach, we would have to check up to all 5 characters for every single position in the text. This results in a time complexity of:
-    \[ O(N \cdot M) \]
-    where:
-    \begin{itemize}
-        \item $N = \text{Length of the text}$
-        \item $M = \text{Length of the searched word (query)}$
-    \end{itemize}
+    \subsection{Rabin-Karp Algorithm}
+    Using the Rabin-Karp algorithm in the
 
     To avoid comparing every single character for every shift, we convert the search terms into a numerical value and compare them directly.
     Time complexity of calculating the Hash is
@@ -264,8 +256,6 @@ find_candidate_v1(const std::string &text,
         }
     }
     \end{lstlisting}
-
-
 
     \subsection{Evaluation}
 

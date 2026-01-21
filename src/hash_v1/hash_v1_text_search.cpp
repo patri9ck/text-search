@@ -1,6 +1,7 @@
 #include "hash_v1_text_search.h"
 
 #include <cstdint>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -12,67 +13,59 @@ Timer hash_v1_timer = Timer(std::string("hash_v1"));
 
 namespace {
 
-uint64_t compute_power(size_t length) {
+uint64_t compute_power(const size_t length) {
     uint64_t p = 1;
+
     for (size_t i = 1; i < length; ++i) {
         p *= PRIME;
     }
+
     return p;
 }
 
+uint64_t hash_string(const char *s, const size_t length) {
+    uint64_t h = 0;
+
+    for (size_t i = 0; i < length; ++i) {
+        h = h * PRIME + static_cast<unsigned char>(s[i]);
+    }
+
+    return h;
 }
 
-std::vector<std::vector<size_t>>
-hash_v1(const std::string &text, const std::vector<std::string> &queries) {
-    std::vector<std::vector<size_t>> indices(queries.size());
+} // namespace
 
-    auto text_length = text.length();
+std::vector<std::vector<size_t>>
+find_hash_v1(const std::string &text, const std::vector<std::string> &queries) {
+
+    std::vector<std::vector<size_t>> indices(queries.size());
+    const size_t text_length = text.length();
 
     for (size_t i = 0; i < queries.size(); ++i) {
-        auto const &query = queries[i];
+        const std::string &query = queries[i];
+        const size_t query_length = query.length();
 
-        auto m = query.length();
-
-        uint64_t query_hash = 0;
-
-        for (size_t j = 0; j < m; ++j) {
-            query_hash = query_hash * PRIME + query[j];
+        if (query_length == 0 || query_length > text_length) {
+            continue;
         }
 
-        auto power = compute_power(m);
+        const uint64_t query_hash = hash_string(query.data(), query_length);
 
-        uint64_t window_hash = 0;
-        for (size_t j = 0; j < m; ++j) {
-            window_hash = window_hash * PRIME + text[j];
-        }
+        const uint64_t power = compute_power(query_length);
 
-        bool match = true;
+        uint64_t window_hash = hash_string(text.data(), query_length);
 
-        if (window_hash == query_hash) {
-            for (size_t j = 0; j < m; ++j) {
-                if (text[j] != query[j]) {
-                    match = false;
-
-                    break;
-                }
+        for (size_t j = 0; j <= text_length - query_length; ++j) {
+            if (window_hash == query_hash &&
+                std::memcmp(text.data() + j, query.data(), query_length) == 0) {
+                indices[i].push_back(j);
             }
 
-            if (match) {
-                indices[i].push_back(0);
-            }
-        }
+            if (j < text_length - query_length) {
+                window_hash -= static_cast<unsigned char>(text[j]) * power;
 
-        for (size_t j = 1; j <= text_length - m; ++j) {
-            match = true;
-
-            window_hash -= static_cast<uint64_t>(static_cast<uint8_t>(text[j - 1])) * power;
-            window_hash *= PRIME;
-            window_hash += static_cast<uint8_t>(text[j + m - 1]);
-
-            if (window_hash == query_hash) {
-                if (memcmp(&text[j], query.data(), m) == 0) {
-                    indices[i].push_back(j);
-                }
+                window_hash = window_hash * PRIME + static_cast<unsigned char>(
+                                                        text[j + query_length]);
             }
         }
     }

@@ -1,7 +1,4 @@
-#include "candidate_v3/candidate_v3_text_search.h"
 #include "cxxopts.hpp"
-#include "hash/hash_v1_text_search.h"
-#include "std/std_text_search.h"
 #include "util.h"
 
 #include <iostream>
@@ -10,7 +7,8 @@ int main(const int argc, char **argv) {
     cxxopts::Options options("text-search", "Search for words in big texts");
 
     options.add_options()(
-        "i,implementation", "implementation: candidate, std, hash_v1, opencl",
+        "i,implementation",
+        "implementation: sequential, openmp, opencl, mpi, combined",
         cxxopts::value<std::string>()->default_value("candidate"))(
         "f,file", "file to search in",
         cxxopts::value<std::vector<std::string>>())(
@@ -36,13 +34,15 @@ int main(const int argc, char **argv) {
     std::vector<std::vector<size_t>> (*find)(const std::string &,
                                              const std::vector<std::string> &);
 
-    if (implementation == "candidate") {
-        find = find_candidate_v3;
-    } else if (implementation == "hash_v1") {
-        find = hash_v1;
-    } else if (implementation == "std") {
-        find = find_std;
+    if (implementation == "sequential") {
+
+    } else if (implementation == "openmp") {
+
     } else if (implementation == "opencl") {
+
+    } else if (implementation == "mpi") {
+
+    } else if (implementation == "combined") {
 
     } else {
         std::cerr << "Unknown implementation." << std::endl;

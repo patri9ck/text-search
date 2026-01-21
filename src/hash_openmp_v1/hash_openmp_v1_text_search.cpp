@@ -1,11 +1,12 @@
 #include "hash_openmp_v1_text_search.h"
-#include <cstdint>
-#include <string>
-#include <vector>
 #include <algorithm>
+#include <cstdint>
+#include <cstring>
 #include <numeric>
-#include <unordered_map>
 #include <omp.h>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #define PRIME 1000003
 
@@ -14,28 +15,30 @@ Timer hash_openmp_v1_timer = Timer(std::string("hash_openmp_v1"));
 #endif
 
 namespace {
-    uint64_t compute_power(size_t length) {
-        uint64_t p = 1;
-        for (size_t i = 1; i < length; ++i) {
-            p *= PRIME;
-        }
-        return p;
+uint64_t compute_power(size_t length) {
+    uint64_t p = 1;
+    for (size_t i = 1; i < length; ++i) {
+        p *= PRIME;
     }
+    return p;
+}
 
-    struct LengthBlock {
+struct LengthBlock {
         size_t length;
         size_t start_idx; // Start im sortierten q_indices Vektor
         size_t count;     // Anzahl der Queries mit dieser Länge
-    };
-}
+};
+} // namespace
 
 std::vector<std::vector<size_t>>
-find_hash_openmp_v1(const std::string &text, const std::vector<std::string> &queries) {
+find_hash_openmp_v1(const std::string &text,
+                    const std::vector<std::string> &queries) {
     std::vector<std::vector<size_t>> indices(queries.size());
     const size_t text_length = text.length();
     const size_t num_queries = queries.size();
 
-    if (num_queries == 0 || text_length == 0) return indices;
+    if (num_queries == 0 || text_length == 0)
+        return indices;
 
     // 1. Indizes sortieren nach Query-Länge (statt Map)
     std::vector<size_t> q_indices(num_queries);
@@ -47,7 +50,7 @@ find_hash_openmp_v1(const std::string &text, const std::vector<std::string> &que
 
     // 2. Blöcke gleicher Länge identifizieren
     std::vector<LengthBlock> blocks;
-    for (size_t i = 0; i < num_queries; ) {
+    for (size_t i = 0; i < num_queries;) {
         size_t len = queries[q_indices[i]].length();
         size_t start = i;
         while (i < num_queries && queries[q_indices[i]].length() == len) {
@@ -71,7 +74,8 @@ find_hash_openmp_v1(const std::string &text, const std::vector<std::string> &que
         for (size_t i = 0; i < block_size; ++i) {
             size_t q_idx = q_indices[start_in_sorted + i];
             uint64_t h = 0;
-            for (char c : queries[q_idx]) h = h * PRIME + (uint8_t)c;
+            for (char c : queries[q_idx])
+                h = h * PRIME + (uint8_t)c;
             hash_to_queries[h].push_back(q_idx);
         }
 
@@ -89,7 +93,8 @@ find_hash_openmp_v1(const std::string &text, const std::vector<std::string> &que
             if (it != hash_to_queries.end()) {
 
                 for (size_t q_idx : it->second) {
-                    if (memcmp(&text[j], queries[q_idx].data(), current_len) == 0) {
+                    if (memcmp(&text[j], queries[q_idx].data(), current_len) ==
+                        0) {
                         indices[q_idx].push_back(j);
                     }
                 }

@@ -1,4 +1,5 @@
 import subprocess
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -15,6 +16,7 @@ IMPLEMENTATIONS = [
     "hash_openmp_v1"
 ]
 
+
 def run_benchmark(impl):
     times = []
     print(f"Benchmarking {impl}: ", end="", flush=True)
@@ -25,7 +27,7 @@ def run_benchmark(impl):
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             time_ms = float(result.stdout.strip())
             times.append(time_ms)
-            print(".", end="", flush=True) # Progress dots
+            print(".", end="", flush=True)  # Progress dots
         except Exception as e:
             print(f"\nFehler bei {impl}: {e}")
             return None, None
@@ -33,6 +35,7 @@ def run_benchmark(impl):
     avg_time = sum(times) / len(times)
     print(f" Done. Avg: {avg_time:.2f}ms")
     return avg_time, times
+
 
 def main():
     avg_results = []
@@ -49,7 +52,6 @@ def main():
     if not labels:
         print("Keine Daten zum Plotten vorhanden.")
         return
-
 
     plt.figure(figsize=(14, 8))
     x_pos = np.arange(len(labels))
@@ -69,13 +71,14 @@ def main():
 
     for bar in bars:
         yval = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2, yval, f'{yval:.1f}',
+        plt.text(bar.get_x() + bar.get_width() / 2, yval, f'{yval:.1f}',
                  va='bottom', ha='center', fontweight='bold')
 
     plt.tight_layout()
     plt.savefig('benchmark_detailed.png')
     print("\nPlot saved as 'benchmark_detailed.png'")
     plt.show()
+
 
 if __name__ == "__main__":
     main()
