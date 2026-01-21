@@ -1,5 +1,6 @@
 #include "candidate_opencl_v1/candidate_opencl_v1_text_search.h"
 #include "candidate_opencl_v2/candidate_opencl_v2_text_search.h"
+#include "candidate_opencl_v3/candidate_opencl_v3_text_search.h"
 #include "candidate_openmp_v1/candidate_openmp_v1_text_search.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search.h"
 #include "candidate_v1/candidate_v1_text_search.h"
@@ -7,7 +8,6 @@
 #include "candidate_v3/candidate_v3_text_search.h"
 #include "candidate_v4/candidate_v4_text_search.h"
 #include "cxxopts.hpp"
-#include "direct/direct_opencl_text_search.h"
 #include "hash_openmp_v1/hash_openmp_v1_text_search.h"
 #include "hash_v1/hash_v1_text_search.h"
 #include "hash_v2/hash_v2_text_search.h"
@@ -148,9 +148,9 @@ int main(const int argc, char **argv) {
     } else if (implementation == "candidate_opencl_v2") {
         find = find_candidate_opencl_v2;
         timer = &candidate_opencl_v2_timer;
-    } else if (implementation == "direct_opencl") {
-        find = find_direct_opencl;
-        timer = &direct_opencl_timer;
+    } else if (implementation == "candidate_opencl_v3") {
+        find = find_candidate_opencl_v3;
+        timer = &candidate_opencl_v3_timer;
     } else if (implementation == "hash_openmp_v1") {
         find = find_hash_openmp_v1;
         timer = &hash_openmp_v1_timer;

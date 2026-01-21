@@ -31,8 +31,8 @@ add_executable(text-search-test
 
         # OpenCL
         src/candidate_opencl_v1/candidate_opencl_v1_text_search.cpp
-        src/direct/direct_opencl_text_search.cpp
-        src/candidate_opencl_v2/candidate_opencl_v2_text_search.cpp)
+        src/candidate_opencl_v2/candidate_opencl_v2_text_search.cpp
+        src/candidate_opencl_v3/candidate_opencl_v3_text_search.cpp)
 
 find_package(OpenCL REQUIRED)
 find_package(OpenMP REQUIRED)

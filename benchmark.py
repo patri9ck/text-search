@@ -1,8 +1,9 @@
-import subprocess
 import csv
 import statistics
-import matplotlib.pyplot as plt
+import subprocess
 from pathlib import Path
+
+import matplotlib.pyplot as plt
 
 # ================== KONFIGURATION ==================
 
@@ -10,12 +11,12 @@ EXECUTABLE = "./cmake-build-release/text-search-test.exe"
 QUERIES_FILE = "common-words.txt"
 DATA_DIR = "data"
 
-ITERATIONS = 3                      # Läufe pro n
+ITERATIONS = 3  # Läufe pro n
 QUERY_COUNTS = list(range(5, 101, 5))  # 5,10,...,100
 
 IMPLEMENTATIONS = [
     "candidate_v1", "candidate_v2", "candidate_v3", "candidate_v4",
-    "candidate_openmp_v1", "candidate_openmp_v2","directComp_opencl_v1", "candidate_opencl_v2",
+    "candidate_openmp_v1", "candidate_openmp_v2", "directComp_opencl_v1", "candidate_opencl_v2",
     "directComp_opencl_v3", "hash_v1", "hash_v2", "hash_openmp_v1"]
 
 OUTPUT_DIR = Path("benchmark_results")
@@ -23,7 +24,8 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 
 ALL_MEDIANS = {}  # Speichert Median-Kurven für den Plot
 
-ALL_ROWS = []     # Alle Daten für die gemeinsame CSV
+ALL_ROWS = []  # Alle Daten für die gemeinsame CSV
+
 
 # ===================================================
 
@@ -56,7 +58,7 @@ def benchmark_implementation(impl):
         times = []
 
         for run in range(ITERATIONS):
-            print(f"[{impl}] n={n} (run {run+1}/{ITERATIONS})", flush=True)
+            print(f"[{impl}] n={n} (run {run + 1}/{ITERATIONS})", flush=True)
             t = run_single(impl, n)
             times.append(t)
 
@@ -84,7 +86,7 @@ def write_csv():
 
     # Feldnamen dynamisch für ITERATIONS
     fieldnames = ["implementation", "n_queries"]
-    for i in range(1, ITERATIONS+1):
+    for i in range(1, ITERATIONS + 1):
         fieldnames.append(f"run_{i}_ms")
     fieldnames.append("median_s")
 

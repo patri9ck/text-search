@@ -191,7 +191,6 @@ find_candidate_v1(const std::string &text,
     \]
     Candidate positions are then extracted from the set bits of $B_{w_{\text{total}}}$ using the same approach described previously.
 
-
     \subsection{Rolling Hash Approach Rabin-Karp Algorithm}
 
     Assume we are searching for the word \textbf{"hello"} in a large text with millions of characters. Using a naive approach, we would have to check up to all 5 characters for every single position in the text. This results in a time complexity of:
@@ -264,7 +263,6 @@ find_candidate_v1(const std::string &text,
         }
     }
     \end{lstlisting}
-
 
     \subsubsection{Grouping queries by length for enhanced performance}
     The first implementation \texttt{hash\_v1\_text\_search.cpp} needs to scan the entire text separately for each query.

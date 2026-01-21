@@ -1,4 +1,4 @@
-#include "direct_opencl_text_search.h"
+#include "candidate_opencl_v3_text_search.h"
 
 #include <CL/opencl.h>
 #include <algorithm>
@@ -9,7 +9,7 @@
 #include <vector>
 
 #ifdef BENCHMARK
-Timer direct_opencl_timer = Timer(std::string("direct_opencl"));
+Timer candidate_opencl_v3_timer = Timer(std::string("candidate_opencl_v3"));
 #endif
 
 namespace {
@@ -96,8 +96,8 @@ void opencl(const cl_int err, const char *function,
 } // namespace
 
 std::vector<std::vector<size_t>>
-find_direct_opencl(const std::string &text,
-                   const std::vector<std::string> &queries) {
+find_candidate_opencl_v3(const std::string &text,
+                         const std::vector<std::string> &queries) {
 
     const auto query_amount = queries.size();
     const auto text_length = text.size();
@@ -190,12 +190,12 @@ find_direct_opencl(const std::string &text,
 
     constexpr size_t local_size = 256;
 
-    const size_t global_work_size[2] = {(text_length + local_size - 1) / local_size * local_size,
-                                   query_amount};
+    const size_t global_work_size[2] = {
+        (text_length + local_size - 1) / local_size * local_size, query_amount};
     constexpr size_t local_work_size[2] = {local_size, 1};
 
-    clEnqueueNDRangeKernel(queue, kernel, 2, nullptr, global_work_size, local_work_size,
-                           0, nullptr, nullptr);
+    clEnqueueNDRangeKernel(queue, kernel, 2, nullptr, global_work_size,
+                           local_work_size, 0, nullptr, nullptr);
 
     uint32_t count = 0;
 
