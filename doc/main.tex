@@ -191,15 +191,23 @@ find_candidate_v1(const std::string &text,
     \]
     Candidate positions are then extracted from the set bits of $B_{w_{\text{total}}}$ using the same approach described previously.
 
-    \subsection{Rabin-Karp Algorithm}
-    Using the Rabin-Karp algorithm in the
+
+    \subsection{Rolling Hash Approach Rabin-Karp Algorithm}
+
+    Assume we are searching for the word \textbf{"hello"} in a large text with millions of characters. Using a naive approach, we would have to check up to all 5 characters for every single position in the text. This results in a time complexity of:
+    \[ O(N \cdot M) \]
+    where:
+    \begin{itemize}
+        \item $N = \text{Length of the text}$
+        \item $M = \text{Length of the searched word (query)}$
+    \end{itemize}
 
     To avoid comparing every single character for every shift, we convert the search terms into a numerical value and compare them directly.
-    Time complexity of calculating the Hash is
+    Time complexity of calculating the Hash is:
     \[ O(M) \]
-    This results in an \textbf{average} time complexity of
+    This results in an \textbf{average} time complexity of:
     \[ O(N + M) \]
-    If unlikely, every hit leads to a hash collision the \textbf{worst-case} time complexity of
+    It is possible that two different strings result in the same hash-value therefore, we have to consider for \textbf{worst-case} that every hit leads to a hash collision. For that case the time complexity is:
     \[ O(N \cdot M) \]
 
     Calculation of the query \textbf{hash value}:
@@ -216,7 +224,7 @@ find_candidate_v1(const std::string &text,
         + t_{j+M-1} \cdot B^0.
     \]
 
-    To ensure we do not have to recalculate the hash value from scratch for every position in the text, we use the \textbf{Rabin-Karp Rolling Hash} algorithm \cite{rabin-karp}:
+    To ensure we do not have to recalculate the hash value from scratch for every position in the text, we use the \textbf{Rabin-Karp Rolling Hash} algorithm\cite{rabin-karp}:
 
     The previous window hash is:
     \[
@@ -246,15 +254,52 @@ find_candidate_v1(const std::string &text,
         \]
     \end{enumerate}
 
-    To make sure the actual text is equal to the query, we double-check with \texttt{text.compare()}. This Problem where two strings return the same hash-value is caused by the $mod\ 2^{64}$ nature of \texttt{uint64\_t} (no negative values).
+    To make sure the actual text is equal to the query, we double-check with \texttt{text.compare()} (see \autoref{lst:verifyComp}.
+    This Problem where two strings return the same hash-value is caused by the $mod\ 2^{64}$ nature of \texttt{uint64\_t} (no negative values).
 
-
-    \begin{lstlisting}[language=C++, caption={Collision verification using \texttt{compare()}}, captionpos=b]
+    \begin{lstlisting}[language=C++, caption={Collision verification using \texttt{compare()}}, captionpos=b, , label=lst:verifyComp]
     if (window_hash == query_hash) {
         if (text.compare(j, m, query) == 0) {
             indices[i].push_back(j);
         }
     }
+    \end{lstlisting}
+
+
+    \subsubsection{Grouping queries by length for enhanced performance}
+    The first implementation \texttt{hash\_v1\_text\_search.cpp} needs to scan the entire text separately for each query.
+    Given a large text (e.g., approx. 84 MB) that exceeds the CPU's L1 and L2 cache capacities,
+    this leads to a bottleneck as the text must be reloaded from RAM for every single query.
+    To optimize memory bandwidth and improve temporal cache locality, \texttt{hash\_v2} groups all queries by their length (see \autoref{lst:groupQueries}).
+    The Rabin-Karp rolling hash is dependent on a fixed window size, this grouping allows the algorithm to scan the text only once for all queries of the same length.
+    \begin{lstlisting}[language=C++, caption={Grouping queries regarding their length}, captionpos=b, label=lst:groupQueries]
+    std::unordered_map<size_t, std::vector<size_t>> length_groups;
+        for (size_t i = 0; i < queries.size(); ++i) {
+            length_groups[queries[i].length()].push_back(i);
+        }
+    \end{lstlisting}
+    By storing the query hashes in a \texttt{std::unordered\_map}, we can check the current \texttt{window\_hash} against multiple queries due to \texttt{std::unordered\_map.find()} with time complexity on average of $O(1)$\cite{unordered_map-find} (see \autoref{lst:findHash}).
+    \begin{lstlisting}[language=C++, caption={Check for the window-hash in the list of queries with the same length}, captionpos=b, label=lst:findHash]
+
+    for (auto const& [len, q_indices] : length_groups)
+
+        //... preperation of data
+
+        for (size_t j = 0; j <= text_length - len; ++j) {
+
+                auto it = hash_table.find(window_hash);
+                if (it != hash_table.end()) {
+                    for (size_t q_idx : it->second) {
+                        if (memcmp(&text[j], queries[q_idx].data(), len) == 0) {
+                            indices[q_idx].push_back(j);
+                        }
+                    }
+                }
+
+            //... roling hash implementation
+
+            }
+        }
     \end{lstlisting}
 
     \subsection{Evaluation}
