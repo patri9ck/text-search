@@ -188,11 +188,13 @@ find_direct_opencl(const std::string &text,
     clSetKernelArg(kernel, 7, sizeof(cl_mem), &counter_buf);
     clSetKernelArg(kernel, 8, sizeof(uint32_t), &max_total_results);
 
-    constexpr size_t local_size[2] = {256, 1};
-    const size_t global_size[2] = {(text_length + 255) / 256 * 256,
-                                   query_amount};
+    constexpr size_t local_size = 256;
 
-    clEnqueueNDRangeKernel(queue, kernel, 2, nullptr, global_size, local_size,
+    const size_t global_work_size[2] = {(text_length + local_size - 1) / local_size * local_size,
+                                   query_amount};
+    constexpr size_t local_work_size[2] = {local_size, 1};
+
+    clEnqueueNDRangeKernel(queue, kernel, 2, nullptr, global_work_size, local_work_size,
                            0, nullptr, nullptr);
 
     uint32_t count = 0;
