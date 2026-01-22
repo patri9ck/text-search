@@ -16,7 +16,7 @@ find_std_openmp(const std::string &text,
     omp_set_num_threads(max_threads);
 
 #pragma omp parallel for default(none) shared(queries, text, indices)
-    for (int i = 0; i < queries.size(); ++i) {
+    for (long i = 0; i < queries.size(); ++i) {
         const std::string &query = queries[i];
 
         auto pos = text.find(query);

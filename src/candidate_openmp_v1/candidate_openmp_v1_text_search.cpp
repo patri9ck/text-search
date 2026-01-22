@@ -45,7 +45,7 @@ find_candidate_openmp_v1(const std::string &text,
     std::vector<std::vector<size_t>> indices(queries.size());
 
 #pragma omp parallel for default(none) shared(queries, indices, text)
-    for (long long i = 0; i < queries.size(); ++i) {
+    for (long i = 0; i < queries.size(); ++i) {
         const std::string &query = queries[i];
 
         uint64_t *mask;
