@@ -28,6 +28,7 @@ add_executable(text-search-test
         src/candidate_openmp_v1/candidate_openmp_v1_text_search.cpp
         src/candidate_openmp_v2/candidate_openmp_v2_text_search.cpp
         src/hash_openmp_v1/hash_openmp_v1_text_search.cpp
+        src/std_openmp/std_openmp_text_search.cpp
 
         # OpenCL
         src/candidate_opencl_v1/candidate_opencl_v1_text_search.cpp

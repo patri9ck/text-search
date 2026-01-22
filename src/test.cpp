@@ -12,6 +12,7 @@
 #include "hash_v1/hash_v1_text_search.h"
 #include "hash_v2/hash_v2_text_search.h"
 #include "std/std_text_search.h"
+#include "std_openmp/std_openmp_text_search.h"
 #include "util.h"
 
 #include <algorithm>
@@ -154,6 +155,9 @@ int main(const int argc, char **argv) {
     } else if (implementation == "hash_openmp_v1") {
         find = find_hash_openmp_v1;
         timer = &hash_openmp_v1_timer;
+    } else if (implementation == "std_openmp") {
+        find = find_std_openmp;
+        timer = &std_openmp_timer;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
