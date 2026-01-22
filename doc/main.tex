@@ -281,6 +281,13 @@ find_candidate_v1(const std::string &text,
 
     for (auto const& [len, q_indices] : length_groups)
 
+        std::unordered_map<uint64_t, std::vector<size_t>> hash_table;
+        for (size_t q_idx : q_indices) {
+            uint64_t h = 0;
+            for (char c : queries[q_idx]) h = h * PRIME + (uint8_t)c;
+            hash_table[h].push_back(q_idx);
+        }
+
         //... preperation of data
 
         for (size_t j = 0; j <= text_length - len; ++j) {
@@ -302,6 +309,37 @@ find_candidate_v1(const std::string &text,
 
     \subsection{Evaluation}
 
+    \subsection{Parallel Implementation}
+
+    \subsubsection{Parallelize the hash approach}
+    To parallelize the hash approach, we assign a group of queries of identical length to each thread.
+    Since OpenMP requires a random access iterator or an integer index for the distribution of loops \texttt{\#pragma omp parallel for},
+    a \texttt{std::unordered\_map} cannot be used directly for parallelization.
+    In the \texttt{hash\_openmp\_v1} implementation, we use a vector in which the query indexes are sorted by length.
+    In addition, a second vector with a special block structure (LengthBlock) is created.
+    This structure stores the respective word length, the start index within the sorted vector, and the number of words in this length group as metadata.
+    This creates independent work packages that can be distributed efficiently by OpenMP to the available processor cores without any synchronization effort.
+
+    \begin{lstlisting}[language=C++, caption={New Data Struct}, captionpos=b, label=lst:blockDataStruct]
+    std::vector<size_t> q_indices(num_queries);
+    std::iota(q_indices.begin(), q_indices.end(), 0);
+
+    std::sort(q_indices.begin(), q_indices.end(), [&](size_t a, size_t b) {
+        return queries[a].length() < queries[b].length();
+    });
+
+    std::vector<LengthBlock> blocks;
+    for (size_t i = 0; i < num_queries; ) {
+        size_t len = queries[q_indices[i]].length();
+        size_t start = i;
+        while (i < num_queries && queries[q_indices[i]].length() == len) {
+            i++;
+        }
+        if (len > 0 && len <= text_length) {
+            blocks.push_back({len, start, i - start});
+        }
+    }
+    \end{lstlisting}
 
     \section{Summary}
 
