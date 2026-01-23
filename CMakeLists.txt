@@ -3,11 +3,24 @@ project(text_search)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(text-search src/main.cpp
-        src/candidate_v3/candidate_v3_text_search.cpp
+add_executable(text-search
+        # Misc
+        src/main.cpp
+        src/timer.cpp
+        src/util.cpp
+
+        # Sequential
         src/std/std_text_search.cpp
-        src/hash_v1/hash_v1_text_search.cpp
-        src/util.cpp)
+
+        # OpenMP
+        src/std_openmp/std_openmp_text_search.cpp
+
+        # MPI
+        src/candidate_mpi/candidate_mpi_text_search.cpp
+
+        # OpenCL
+        src/candidate_opencl_v2/candidate_opencl_v2_text_search.cpp
+        src/candidate_opencl_v3/candidate_opencl_v3_text_search.cpp)
 
 add_executable(text-search-test
         # Misc
@@ -30,8 +43,8 @@ add_executable(text-search-test
         src/candidate_openmp_v2/candidate_openmp_v2_text_search.cpp
         src/hash_openmp/hash_openmp_text_search.cpp
 
-        # OpenMPI
-        src/candidate_openmpi_v1/candidate_openmpi_v1_text_search.cpp
+        # MPI
+        src/candidate_mpi/candidate_mpi_text_search.cpp
 
         # OpenCL
         src/candidate_opencl_v1/candidate_opencl_v1_text_search.cpp

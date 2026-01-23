@@ -1,4 +1,10 @@
+#include "candidate_mpi/candidate_mpi_text_search.h"
+#include "candidate_opencl_v2/candidate_opencl_v2_text_search.h"
+#include "candidate_opencl_v3/candidate_opencl_v3_text_search.h"
 #include "cxxopts.hpp"
+#include "std/std_text_search.h"
+#include "std_openmp/std_openmp_text_search.h"
+#include "timer.h"
 #include "util.h"
 
 #include <iostream>
@@ -8,8 +14,8 @@ int main(const int argc, char **argv) {
 
     options.add_options()(
         "i,implementation",
-        "implementation: sequential, openmp, opencl, mpi, combined",
-        cxxopts::value<std::string>()->default_value("candidate"))(
+        "implementation: sequential, openmp, opencl, opencl-safe, mpi, combined",
+        cxxopts::value<std::string>()->default_value("openmp"))(
         "f,file", "file to search in",
         cxxopts::value<std::vector<std::string>>())(
         "d,directory", "directory to search in",
@@ -29,27 +35,36 @@ int main(const int argc, char **argv) {
         return 1;
     }
 
-    std::string implementation = result["implementation"].as<std::string>();
+    const auto implementation = result["implementation"].as<std::string>();
 
     std::vector<std::vector<size_t>> (*find)(const std::string &,
                                              const std::vector<std::string> &);
 
+    std::string name;
+
     if (implementation == "sequential") {
-
+        find = find_std;
+        name = "std";
     } else if (implementation == "openmp") {
-
-    } else if (implementation == "opencl") {
-
+        find = find_std_openmp;
+        name = "std_openmp";
     } else if (implementation == "mpi") {
-
-    } else if (implementation == "combined") {
+        find = find_candidate_mpi;
+        name = "candidate_mpi";
+    } else if (implementation == "opencl") {
+        find = find_candidate_opencl_v3;
+        name = "candidate_opencl_v3";
+    } else if (implementation == "opencl-safe") {
+        find = find_candidate_opencl_v2;
+        name = "candidate_opencl_v2";
+    }  else if (implementation == "combined") {
 
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
     }
 
-    auto queries = result["query"].as<std::vector<std::string>>();
+    const auto queries = result["query"].as<std::vector<std::string>>();
 
     std::map<std::string, std::string> texts;
 
@@ -90,11 +105,19 @@ int main(const int argc, char **argv) {
         total += text;
     }
 
-    std::cout << "Searching with " << implementation
+    std::cout << "Searching with " << name
               << " through an assembled text of size " << total.length() << "."
               << std::endl;
 
+    Timer timer("main");
+
+    timer.start_total();
+
     auto matches = find(total, queries);
+
+    timer.stop_total();
+
+    std::cout << "Finished in " << timer.get_total_time() << " ms." << std::endl;
 
     for (int i = 0; i < queries.size(); ++i) {
         const auto &query = queries[i];

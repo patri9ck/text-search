@@ -1,9 +1,9 @@
+#include "candidate_mpi/candidate_mpi_text_search.h"
 #include "candidate_opencl_v1/candidate_opencl_v1_text_search.h"
 #include "candidate_opencl_v2/candidate_opencl_v2_text_search.h"
 #include "candidate_opencl_v3/candidate_opencl_v3_text_search.h"
 #include "candidate_openmp_v1/candidate_openmp_v1_text_search.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search.h"
-#include "candidate_openmpi_v1/candidate_openmpi_v1_text_search.h"
 #include "candidate_v1/candidate_v1_text_search.h"
 #include "candidate_v2/candidate_v2_text_search.h"
 #include "candidate_v3/candidate_v3_text_search.h"
@@ -172,8 +172,8 @@ int main(const int argc, char **argv) {
 
     // MPI
     else if (implementation == "candidate_openmpi_v1") {
-        find = find_candidate_openmpi_v1;
-        timer = &candidate_openmpi_v1_timer;
+        find = find_candidate_mpi;
+        timer = &candidate_mpi_timer;
     }
 
     else {

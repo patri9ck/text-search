@@ -3,22 +3,37 @@
 - **Linux**
 
 ```
-$ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-$ cmake --build build
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
 ```
 
 This will create two executables in `build/`, `text-search` and `text-search-test` (or`text-search.exe` and
-`text-search-test.exe` on Windows).
+`text-search-test.exe` on Windows, respectively).
+
+# Using the Command Line Tool
+
+The command line tool `text-search` provides the best implementations using OpenMP, MPI, OpenCL (safe or unsafe) or
+simply a single thread (sequential).
+
+Example call:
+
+```
+build/text-search -i openmp -d data -f README.md -q text -q search
+```
+
+This uses the best OpenMP implementation, loads all files in the directory `data/` and the file `README.md` to look
+through and searches for the words
+`text` and `search`. Run `build/text-search --help` for a list of all options.
 
 # Running Tests
 
 Example call:
 
 ```
-$ build/text-search-test -i candidate_v3 -d data -f common-words.txt -c
+build/text-search-test -i candidate_v3 -d data -f common-words.txt -c
 ```
 
-This will load all books in the directory `data/`, all queries in the file `common-words.txt`, run the `candidate_v3`
+This will load all books from the directory `data/`, all queries in the file `common-words.txt`, run the `candidate_v3`
 implementation and
 test it against the reference implementation. Run `build/text-search-test --help` for an overview of all options.
 
@@ -34,9 +49,9 @@ python3 benchmark.py -i openmp -e build/text-search-test -m queries -q common-wo
 
 Run `python3 benchmark.py --help` for an overview of all options.
 
-# Downloading Books from Project Gutenberg
+# Downloading Ebooks from Project Gutenberg
 
-To download the top 100 books from Project Gutenberg into `data/`, run:
+To download the top 100 ebooks from Project Gutenberg into `data/`, run:
 
 ```
 python3 download-gutenberg-ebooks.py
@@ -62,8 +77,21 @@ python3 download-gutenberg-ebooks.py
 - `candidate_v4`:
   This creates a huge bit mask for all queries together instead of creating one per query.
 
+- `std_openmp`
+  Parallelization of `std` using OpenMP.
+
 - `candidate_openmp_v1`:
   Parallelization of `candidate_v3` using OpenMP.
 
 - `candidate_openmp_v2`:
   Parallelization of `candidate_v4` using OpenMP.
+
+- `hash_openmp`
+
+- `candidate_mpi`
+
+- `candidate_opencl_v1`
+
+- `candidate_opencl_v2`
+
+- `candidate_opencl_v3`

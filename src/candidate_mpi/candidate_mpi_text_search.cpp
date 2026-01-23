@@ -1,4 +1,4 @@
-#include "candidate_openmpi_v1_text_search.h"
+#include "candidate_mpi_text_search.h"
 
 #include <cstdint>
 #include <cstring>
@@ -6,7 +6,7 @@
 #include <mpi.h>
 
 #ifdef BENCHMARK
-Timer candidate_openmpi_v1_timer = Timer(std::string("candidate_openmpi_v1"));
+Timer candidate_mpi_timer = Timer(std::string("candidate_mpi"));
 #endif
 
 namespace {
@@ -41,7 +41,7 @@ bool test_candidate(const size_t index, const std::string_view text,
 } // namespace
 
 std::vector<std::vector<size_t>>
-find_candidate_openmpi_v1(const std::string &text,
+find_candidate_mpi(const std::string &text,
                           const std::vector<std::string> &queries) {
     int initialized = 0;
     MPI_Initialized(&initialized);
