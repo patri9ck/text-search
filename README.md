@@ -1,4 +1,4 @@
-# Build Instructions
+## Build Instructions
 
 - **Linux**
 
@@ -10,7 +10,7 @@ cmake --build build
 This will create two executables in `build/`, `text-search` and `text-search-test` (or`text-search.exe` and
 `text-search-test.exe` on Windows, respectively).
 
-# Using the Command Line Tool
+## Using the Command Line Tool
 
 The command line tool `text-search` provides the best implementations using OpenMP, MPI, OpenCL (safe or unsafe) or
 simply a single thread (sequential).
@@ -25,7 +25,7 @@ This uses the best OpenMP implementation, loads all files in the directory `data
 through and searches for the words
 `text` and `search`. Run `build/text-search --help` for a list of all options.
 
-# Running Tests
+## Running Tests
 
 Example call:
 
@@ -37,7 +37,7 @@ This will load all books from the directory `data/`, all queries in the file `co
 implementation and
 test it against the reference implementation. Run `build/text-search-test --help` for an overview of all options.
 
-# Creating Plots
+## Creating Plots
 
 To create plots and CSV files, `benchmark.py` exists which calls `text-search-test`. It stores its results in `doc/`.
 
@@ -49,7 +49,7 @@ python3 benchmark.py -i openmp -e build/text-search-test -m queries -q common-wo
 
 Run `python3 benchmark.py --help` for an overview of all options.
 
-# Downloading Ebooks from Project Gutenberg
+## Downloading Ebooks from Project Gutenberg
 
 To download the top 100 ebooks from Project Gutenberg into `data/`, run:
 
@@ -57,7 +57,7 @@ To download the top 100 ebooks from Project Gutenberg into `data/`, run:
 python3 download-gutenberg-ebooks.py
 ```
 
-# Implementations Overview
+## Implementations Overview
 
 - `std`:
   Uses the standard library, e.g. `std::string::find()`, and is used to check for correctness.
