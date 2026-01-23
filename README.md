@@ -12,7 +12,7 @@ This will create two executables in `build/`, `text-search` and `text-search-tes
 
 ## Using the Command Line Tool
 
-The command line tool `text-search` provides the best implementations using OpenMP, MPI, OpenCL (safe or unsafe) or
+The command line tool `text-search` provides the best implementations using OpenMP, MPI, OpenCL (safe or unsafe), them combined, or
 simply a single thread (sequential).
 
 Example call:
