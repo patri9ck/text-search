@@ -69,10 +69,10 @@ int main(const int argc, char **argv) {
     std::map<std::string, std::string> texts;
 
     if (result.count("file")) {
-        auto files = result["file"].as<std::vector<std::string>>();
+        const auto files = result["file"].as<std::vector<std::string>>();
 
         for (auto &file : files) {
-            auto content = read_file(file);
+            const auto content = read_file(file);
 
             if (content) {
                 texts[file] = *content;
@@ -124,7 +124,7 @@ int main(const int argc, char **argv) {
 
         std::cout << "Query " << query << ":" << std::endl;
 
-        auto indices = matches[i];
+        const auto& indices = matches[i];
 
         for (auto it = texts.begin(); it != texts.end(); ++it) {
             std::cout << it->first << ": ";
@@ -135,7 +135,7 @@ int main(const int argc, char **argv) {
                 before += jt->second.length();
             }
 
-            for (auto &index : indices) {
+            for (const auto &index : indices) {
                 if (index >= before && index <= before + it->second.length()) {
                     std::cout << index << " ";
                 }
