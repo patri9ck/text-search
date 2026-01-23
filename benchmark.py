@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 SEQUENTIAL = ["std", "candidate_v1", "candidate_v2", "candidate_v3", "candidate_v4", "hash_v1", "hash_v2"]
 OPENMP = ["std_openmp", "candidate_openmp_v1", "candidate_openmp_v2", "hash_openmp"]
-MPI = []
+MPI = ["candidate_mpi"]
 OPENCL = ["candidate_opencl_v1", "candidate_opencl_v2", "candidate_opencl_v3"]
 COMBINED = []
 
