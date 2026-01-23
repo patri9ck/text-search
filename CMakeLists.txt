@@ -16,19 +16,19 @@ add_executable(text-search-test
         src/util.cpp
 
         # Sequential
+        src/std/std_text_search.cpp
         src/candidate_v1/candidate_v1_text_search.cpp
         src/candidate_v2/candidate_v2_text_search.cpp
         src/candidate_v3/candidate_v3_text_search.cpp
         src/candidate_v4/candidate_v4_text_search.cpp
-        src/std/std_text_search.cpp
         src/hash_v1/hash_v1_text_search.cpp
         src/hash_v2/hash_v2_text_search.cpp
 
         # OpenMP
+        src/std_openmp/std_openmp_text_search.cpp
         src/candidate_openmp_v1/candidate_openmp_v1_text_search.cpp
         src/candidate_openmp_v2/candidate_openmp_v2_text_search.cpp
-        src/hash_openmp_v1/hash_openmp_v1_text_search.cpp
-        src/std_openmp/std_openmp_text_search.cpp
+        src/hash_openmp/hash_openmp_text_search.cpp
 
         # OpenMPI
         src/candidate_openmpi_v1/candidate_openmpi_v1_text_search.cpp

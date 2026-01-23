@@ -3,13 +3,13 @@
 #include "candidate_opencl_v3/candidate_opencl_v3_text_search.h"
 #include "candidate_openmp_v1/candidate_openmp_v1_text_search.h"
 #include "candidate_openmp_v2/candidate_openmp_v2_text_search.h"
+#include "candidate_openmpi_v1/candidate_openmpi_v1_text_search.h"
 #include "candidate_v1/candidate_v1_text_search.h"
 #include "candidate_v2/candidate_v2_text_search.h"
 #include "candidate_v3/candidate_v3_text_search.h"
 #include "candidate_v4/candidate_v4_text_search.h"
-#include "candidate_openmpi_v1/candidate_openmpi_v1_text_search.h"
 #include "cxxopts.hpp"
-#include "hash_openmp_v1/hash_openmp_v1_text_search.h"
+#include "hash_openmp/hash_openmp_text_search.h"
 #include "hash_v1/hash_v1_text_search.h"
 #include "hash_v2/hash_v2_text_search.h"
 #include "std/std_text_search.h"
@@ -120,7 +120,11 @@ int main(const int argc, char **argv) {
                                              const std::vector<std::string> &);
     Timer *timer;
 
-    if (implementation == "candidate_v1") {
+    // Sequential
+    if (implementation == "std") {
+        find = find_std;
+        timer = &std_timer;
+    } else if (implementation == "candidate_v1") {
         find = find_candidate_v1;
         timer = &candidate_v1_timer;
     } else if (implementation == "candidate_v2") {
@@ -138,13 +142,24 @@ int main(const int argc, char **argv) {
     } else if (implementation == "hash_v2") {
         find = find_hash_v2;
         timer = &hash_v2_timer;
+
+        // OpenMP
+    } else if (implementation == "std_openmp") {
+        find = find_std_openmp;
+        timer = &std_openmp_timer;
     } else if (implementation == "candidate_openmp_v1") {
         find = find_candidate_openmp_v1;
         timer = &candidate_openmp_v1_timer;
     } else if (implementation == "candidate_openmp_v2") {
         find = find_candidate_openmp_v2;
         timer = &candidate_openmp_v2_timer;
-    } else if (implementation == "candidate_opencl_v1") {
+    } else if (implementation == "hash_openmp") {
+        find = find_hash_openmp;
+        timer = &hash_openmp_timer;
+    }
+
+    // OpenCL
+    else if (implementation == "candidate_opencl_v1") {
         find = find_candidate_opencl_v1;
         timer = &candidate_opencl_v1_timer;
     } else if (implementation == "candidate_opencl_v2") {
@@ -153,16 +168,15 @@ int main(const int argc, char **argv) {
     } else if (implementation == "candidate_opencl_v3") {
         find = find_candidate_opencl_v3;
         timer = &candidate_opencl_v3_timer;
-    } else if (implementation == "hash_openmp_v1") {
-        find = find_hash_openmp_v1;
-        timer = &hash_openmp_v1_timer;
-    } else if (implementation == "std_openmp") {
-        find = find_std_openmp;
-        timer = &std_openmp_timer;
-    } else if (implementation == "candidate_openmpi_v1") {
+    }
+
+    // MPI
+    else if (implementation == "candidate_openmpi_v1") {
         find = find_candidate_openmpi_v1;
         timer = &candidate_openmpi_v1_timer;
-    } else {
+    }
+
+    else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
     }

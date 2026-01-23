@@ -1,58 +1,36 @@
-import csv
+import argparse
+import os
 import statistics
 import subprocess
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-# ================== KONFIGURATION ==================
+SEQUENTIAL = ["std", "candidate_v1", "candidate_v2", "candidate_v3", "candidate_v4", "hash_v1", "hash_v2"]
+OPENMP = ["std_openmp", "candidate_openmp_v1", "candidate_openmp_v2", "hash_openmp"]
+MPI = []
+OPENCL = ["candidate_opencl_v1", "candidate_opencl_v2", "candidate_opencl_v3"]
+COMBINED = []
 
-EXECUTABLE = "./cmake-build-release/text-search-test.exe"
-QUERIES_FILE = "common-words.txt"
-DATA_DIR = "data"
-PROCESSES_MPI = 8
-
-ITERATIONS = 3  # Läufe pro n
-QUERY_COUNTS = list(range(5, 101, 5))  # 5,10,...,100
-
-IMPLEMENTATIONS = [
-    "candidate_openmpi_v1_text_search", "candidate_v1", "candidate_v2", "candidate_v3", "candidate_v4",
-    "candidate_openmp_v1", "candidate_openmp_v2", "directComp_opencl_v1", "candidate_opencl_v2",
-    "directComp_opencl_v3", "hash_v1", "hash_v2", "hash_openmp_v1"]
-
-OUTPUT_DIR = Path("benchmark_results")
-OUTPUT_DIR.mkdir(exist_ok=True)
-
-ALL_MEDIANS = {}  # Speichert Median-Kurven für den Plot
-
-ALL_ROWS = []  # Alle Daten für die gemeinsame CSV
+OUTPUT_DIR = "doc"
 
 
-# ===================================================
+def run_single(implementation, executable, args, book_dir, query_file, mpi_processes=0):
+    command = []
 
-def run_single(impl, n_queries):
-    if "openmpi" in impl:
-        cmd = [
-            "mpiexec", "-n", str(PROCESSES_MPI),
-            EXECUTABLE,
-            "-i", impl,
-            "-f", QUERIES_FILE,
-            "-d", DATA_DIR,
-            "-n", str(n_queries),
-            "--raw"
-        ]
-    else:
-        cmd = [
-            EXECUTABLE,
-            "-i", impl,
-            "-f", QUERIES_FILE,
-            "-d", DATA_DIR,
-            "-n", str(n_queries),
-            "--raw"
-        ]
+    if mpi_processes > 0:
+        command += ["mpiexec", "-n", str(mpi_processes)]
+
+    command += [
+        executable,
+        "-i", implementation,
+        "-d", book_dir,
+        "-f", query_file,
+        "--raw",
+        *args
+    ]
 
     result = subprocess.run(
-        cmd,
+        command,
         capture_output=True,
         text=True,
         check=True
@@ -61,81 +39,152 @@ def run_single(impl, n_queries):
     return float(result.stdout.strip())
 
 
-def benchmark_implementation(impl):
-    print(f"\n=== Benchmarking {impl} ===")
+def benchmark_implementation(implementation, executable, args, book_dir, query_file, amounts, mpi_processes=0):
+    print(f"Benchmarking {implementation}...")
 
-    rows = []
+    results = []
 
-    for n in QUERY_COUNTS:
+    for _ in amounts:
         times = []
 
-        for run in range(ITERATIONS):
-            print(f"[{impl}] n={n} (run {run + 1}/{ITERATIONS})", flush=True)
-            t = run_single(impl, n)
-            times.append(t)
+        for _ in range(20):
+            times.append(run_single(implementation, executable, args + [str(n)], book_dir, query_file, mpi_processes))
 
-        median_time = statistics.median(times)
-        median_time_s = median_time / 1000
+        results.append(statistics.median(times))
 
-        row = {
-            "implementation": impl,
-            "n_queries": n,
-            "median_s": median_time_s
-        }
-        for idx, t in enumerate(times, start=1):
-            row[f"run_{idx}_ms"] = t / 1000
-
-        rows.append(row)
-        ALL_ROWS.append(row)
-
-    # Für den Gesamtplot speichern
-    ALL_MEDIANS[impl] = [(row["n_queries"], row["median_s"]) for row in rows]
+    return results
 
 
-def write_csv():
-    out_file = OUTPUT_DIR / "benchmark_all.csv"
-    print(f"\n→ Writing combined CSV: {out_file}")
+def write_csv(results, amounts, query_file, mode):
+    print("Writing csvs...")
 
-    # Feldnamen dynamisch für ITERATIONS
-    fieldnames = ["implementation", "n_queries"]
-    for i in range(1, ITERATIONS + 1):
-        fieldnames.append(f"run_{i}_ms")
-    fieldnames.append("median_s")
+    for implementation, times in results.items():
+        file_path = os.path.join(OUTPUT_DIR, f"{implementation}_{mode}_{os.path.splitext(query_file)[0]}.csv")
 
-    with out_file.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(ALL_ROWS)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(implementation + "\n")
+
+            for time, amount in zip(times, amounts):
+                f.write(str(amount) + "," + str(time) + "\n")
 
 
-def plot_all_models():
+def plot(results, amounts, x_label, query_file, mode, implementation_group):
+    print("Creating plots...")
+
     plt.figure(figsize=(12, 7))
 
-    for impl, data in ALL_MEDIANS.items():
-        n_vals = [n for n, _ in data]
-        medians = [m for _, m in data]
-        plt.plot(n_vals, medians, marker="o", label=impl)
+    for implementation, times in results.items():
+        plt.plot(amounts, times, marker="o", label=implementation)
 
-    plt.xlabel("Number of Queries (n)")
-    plt.ylabel("Median Execution Time (ms)")
-    plt.title("Median Runtime vs. Queries (All Implementations)")
+    plt.xlabel(x_label)
+    plt.ylabel("ms")
     plt.grid(True, which="both", linestyle="--", alpha=0.6)
     plt.legend(fontsize=9)
 
-    out_file = OUTPUT_DIR / "benchmark_all_models.png"
+    output_file = os.path.join(OUTPUT_DIR, f"{implementation_group}_{mode}_{os.path.splitext(query_file)[0]}.png")
+
     plt.tight_layout()
-    plt.savefig(out_file)
+    plt.savefig(output_file)
     plt.close()
-    print(f"📊 Combined plot saved to {out_file}")
+
+    print(f"Combined plot saved to {output_file}.")
 
 
 def main():
-    for impl in IMPLEMENTATIONS:
-        benchmark_implementation(impl)
+    parser = argparse.ArgumentParser(description="Text Search Benchmarking")
 
-    write_csv()
-    plot_all_models()
-    print("\n✅ All benchmarks completed.")
+    parser.add_argument(
+        "-i", "--implementation",
+        required=True,
+        choices=["sequential", "openmp", "mpi", "opencl", "combined", "all"],
+        help="Implementation to use"
+    )
+
+    parser.add_argument(
+        "-e", "--executable",
+        required=True,
+        help="Path to the executable (not validated)"
+    )
+
+    parser.add_argument(
+        "-m", "--mode",
+        required=True,
+        choices=["queries", "books"],
+        help="Mode: queries or books"
+    )
+
+    parser.add_argument(
+        "-q", "--query-file",
+        required=True,
+        help="Query file (text file)"
+    )
+
+    parser.add_argument(
+        "-b", "--book-dir",
+        required=True,
+        help="Book directory or book file"
+    )
+
+    parser.add_argument(
+        "--book-amount",
+        type=int,
+        default=98,
+        help="Maximum amount of books (default: 98)"
+    )
+
+    parser.add_argument(
+        "--query-amount",
+        type=int,
+        default=100,
+        help="Maximum amount of queries (default: 100)"
+    )
+
+    parser.add_argument(
+        "--mpi-processes",
+        type=int,
+        default=0,
+        help="Number of MPI processes (default: 0)"
+    )
+
+    args = parser.parse_args()
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    implementations = []
+
+    match args.implementation:
+        case "sequential":
+            implementations = SEQUENTIAL
+        case "openmp":
+            implementations = OPENMP
+        case "mpi":
+            implementations = MPI
+        case "opencl":
+            implementations = OPENCL
+        case "combined":
+            implementations = COMBINED
+        case _:
+            implementations = SEQUENTIAL + OPENMP + MPI + OPENCL + COMBINED
+
+    print(f"Benchmarking {", ".join(implementations)} and saving output to {OUTPUT_DIR}...")
+
+    results = {}
+
+    amounts = range(5, (args.query_amount if args.mode == "queries" else args.book_amount) + 1, 5)
+
+    for implementation in implementations:
+        results[implementation] = benchmark_implementation(implementation,
+                                                           args.executable,
+                                                           ["-n"] if args.mode == "queries" else ["-m"],
+                                                           args.book_dir,
+                                                           args.query_file,
+                                                           amounts,
+                                                           args.mpi_processes)
+
+    write_csv(results, amounts, args.query_file, args.mode)
+
+    plot(results, amounts, "Queries" if args.mode == "queries" else "Books", args.query_file, args.mode,
+         args.implementation)
 
 
 if __name__ == "__main__":

@@ -137,13 +137,9 @@ find_candidate_opencl_v3(const std::string &text,
     cl_ulong max_alloc_size;
     uint64_t total_estimate = 0;
 
-    opencl(clGetDeviceInfo(
-       device,
-       CL_DEVICE_MAX_MEM_ALLOC_SIZE,
-       sizeof(cl_ulong),
-       &max_alloc_size,
-       nullptr
-   ), "clGetDeviceInfo");
+    opencl(clGetDeviceInfo(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+                           sizeof(cl_ulong), &max_alloc_size, nullptr),
+           "clGetDeviceInfo");
 
     for (size_t i = 0; i < query_amount; ++i) {
         const auto query_length = queries[i].length();
@@ -172,7 +168,8 @@ find_candidate_opencl_v3(const std::string &text,
         }
     }
 
-    const uint32_t results_amount = std::min(total_estimate / 2, max_alloc_size / sizeof(uint32_t));
+    const uint32_t results_amount =
+        std::min(total_estimate / 2, max_alloc_size / sizeof(uint32_t));
 
     const auto text_buffer =
         clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,

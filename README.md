@@ -7,18 +7,45 @@ $ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 $ cmake --build build
 ```
 
-- Windows
-- WSL
-
-This will create two executables in `build/`, `text-search` and `text-search-test`.
+This will create two executables in `build/`, `text-search` and `text-search-test` (or`text-search.exe` and
+`text-search-test.exe` on Windows).
 
 # Running Tests
 
+Example call:
+
 ```
-$ build/text-search-test -d data -f common-words.txt
+$ build/text-search-test -i candidate_v3 -d data -f common-words.txt -c
+```
+
+This will load all books in the directory `data/`, all queries in the file `common-words.txt`, run the `candidate_v3`
+implementation and
+test it against the reference implementation. Run `build/text-search-test --help` for an overview of all options.
+
+# Creating Plots
+
+To create plots and CSV files, `benchmark.py` exists which calls `text-search-test`. It stores its results in `doc/`.
+
+Example call:
+
+```
+python3 benchmark.py -i openmp -e build/text-search-test -m queries -q common-words.txt -b data
+```
+
+Run `python3 benchmark.py --help` for an overview of all options.
+
+# Downloading Books from Project Gutenberg
+
+To download the top 100 books from Project Gutenberg into `data/`, run:
+
+```
+python3 download-gutenberg-ebooks.py
 ```
 
 # Implementations Overview
+
+- `std`:
+  Uses the standard library, e.g. `std::string::find()`, and is used to check for correctness.
 
 - `candidate_v1`:
   Loops through each query and then through each character of the text. If a character matches the first character of
@@ -30,62 +57,13 @@ $ build/text-search-test -d data -f common-words.txt
   Same as `candidate_v1` but uses a pre-allocated int array per query the size of the text.
 
 - `candidate_v3`:
-  To save storage and improve cache utilization, a bit mask is used instead of an int array. **The fastest
-  candidate-based
-  sequential implementation.**
+  To save storage and improve cache utilization, a bit mask is used instead of an int array.
 
 - `candidate_v4`:
   This creates a huge bit mask for all queries together instead of creating one per query.
 
-- `hash`:
-  A rolling hash approach, hard to parallelize.
-
-- `std`:
-  An implementation using C++ standard library functions used to check for correctness.
-
 - `candidate_openmp_v1`:
-  Parallelization of `candidate_v3` using OpenMP. **The fastest parallel implementation using CPU threads.**
+  Parallelization of `candidate_v3` using OpenMP.
 
 - `candidate_openmp_v2`:
   Parallelization of `candidate_v4` using OpenMP.
-
-# Rolling Hash Implementation
-
-1. **Define Prime Number**  
-   In this implementation, we use a fixed prime number: `131`.
-
-2. **Calculate Query Hash**  
-   To compute the `query_hash`, each character of the query is multiplied by powers of the prime number:
-
-```
-    query_hash = query[0]*prime^(m-1) + query[1]*prime^(m-2) + ... + query[m-1]
-```
-
-This represents the query as a number in base `prime`.
-
-3. **Compute Power for Rolling Hash**  
-   Calculate `power = prime^(m-1)` based on the length of the query.  
-   This is necessary to correctly remove the leftmost character when rolling the hash over the text.
-
-4. **Compute Hash for the First Window of the Text**  
-   Calculate the hash of the first substring of the text with the same length as the query.
-
-5. **Rolling Hash Across the Rest of the Text**  
-   For each subsequent position:
-
-- Remove the leftmost character:
-  ```
-  window_hash -= text[i-1] * power
-  ```
-- Shift the hash:
-  ```
-  window_hash *= prime
-  ```
-- Add the new rightmost character:
-  ```
-  window_hash += text[i + m - 1]
-  ```
-
-6. **Check for Hash Matches**  
-   If the rolling hash matches `query_hash`, optionally perform a character-by-character comparison to confirm the
-   match.

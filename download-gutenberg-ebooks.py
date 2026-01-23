@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import re
 
@@ -64,7 +62,7 @@ def main():
 
     ebook_ids = get_top_100_ebook_ids()
 
-    print(f"Found {len(ebook_ids)} ebooks.")
+    print(f"Found {len(ebook_ids)} ebooks and saving them to {OUTPUT_DIR}...")
 
     for idx, ebook_id in enumerate(ebook_ids, start=1):
         print(f"[{idx}/100] Downloading ebook {ebook_id}...")
