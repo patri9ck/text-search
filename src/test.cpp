@@ -7,6 +7,7 @@
 #include "candidate_v2/candidate_v2_text_search.h"
 #include "candidate_v3/candidate_v3_text_search.h"
 #include "candidate_v4/candidate_v4_text_search.h"
+#include "candidate_openmpi_v1/candidate_openmpi_v1_text_search.h"
 #include "cxxopts.hpp"
 #include "hash_openmp_v1/hash_openmp_v1_text_search.h"
 #include "hash_v1/hash_v1_text_search.h"
@@ -158,6 +159,9 @@ int main(const int argc, char **argv) {
     } else if (implementation == "std_openmp") {
         find = find_std_openmp;
         timer = &std_openmp_timer;
+    } else if (implementation == "candidate_openmpi_v1") {
+        find = find_candidate_openmpi_v1;
+        timer = &candidate_openmpi_v1_timer;
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;

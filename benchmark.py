@@ -10,12 +10,13 @@ import matplotlib.pyplot as plt
 EXECUTABLE = "./cmake-build-release/text-search-test.exe"
 QUERIES_FILE = "common-words.txt"
 DATA_DIR = "data"
+PROCESSES_MPI = 8
 
 ITERATIONS = 3  # Läufe pro n
 QUERY_COUNTS = list(range(5, 101, 5))  # 5,10,...,100
 
 IMPLEMENTATIONS = [
-    "candidate_v1", "candidate_v2", "candidate_v3", "candidate_v4",
+    "candidate_openmpi_v1_text_search", "candidate_v1", "candidate_v2", "candidate_v3", "candidate_v4",
     "candidate_openmp_v1", "candidate_openmp_v2", "directComp_opencl_v1", "candidate_opencl_v2",
     "directComp_opencl_v3", "hash_v1", "hash_v2", "hash_openmp_v1"]
 
@@ -30,14 +31,25 @@ ALL_ROWS = []  # Alle Daten für die gemeinsame CSV
 # ===================================================
 
 def run_single(impl, n_queries):
-    cmd = [
-        EXECUTABLE,
-        "-i", impl,
-        "-f", QUERIES_FILE,
-        "-d", DATA_DIR,
-        "-n", str(n_queries),
-        "--raw"
-    ]
+    if "openmpi" in impl:
+        cmd = [
+            "mpiexec", "-n", str(PROCESSES_MPI),
+            EXECUTABLE,
+            "-i", impl,
+            "-f", QUERIES_FILE,
+            "-d", DATA_DIR,
+            "-n", str(n_queries),
+            "--raw"
+        ]
+    else:
+        cmd = [
+            EXECUTABLE,
+            "-i", impl,
+            "-f", QUERIES_FILE,
+            "-d", DATA_DIR,
+            "-n", str(n_queries),
+            "--raw"
+        ]
 
     result = subprocess.run(
         cmd,

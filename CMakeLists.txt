@@ -30,6 +30,9 @@ add_executable(text-search-test
         src/hash_openmp_v1/hash_openmp_v1_text_search.cpp
         src/std_openmp/std_openmp_text_search.cpp
 
+        # OpenMPI
+        src/candidate_openmpi_v1/candidate_openmpi_v1_text_search.cpp
+
         # OpenCL
         src/candidate_opencl_v1/candidate_opencl_v1_text_search.cpp
         src/candidate_opencl_v2/candidate_opencl_v2_text_search.cpp
