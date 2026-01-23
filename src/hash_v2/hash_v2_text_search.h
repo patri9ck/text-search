@@ -1,5 +1,5 @@
-#ifndef TEXT_SEARCH_HASH_V2_TEXT_SEARCH_H
-#define TEXT_SEARCH_HASH_V2_TEXT_SEARCH_H
+#ifndef HASH_V2_TEXT_SEARCH_H
+#define HASH_V2_TEXT_SEARCH_H
 
 #include <string>
 #include <vector>
