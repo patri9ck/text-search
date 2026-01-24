@@ -50,27 +50,57 @@ find_candidate_mpi(const std::string &text,
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    size_t total_length = text.length();
-    size_t max_q_len = get_max_query_length(queries);
+    auto copied_text = text;
+    auto copied_queries = queries;
+
+    auto text_length = static_cast<int>(copied_text.length());
+    auto query_amount = static_cast<int>(copied_queries.size());
+
+    MPI_Bcast(&text_length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (rank != 0) {
+        copied_text.resize(text_length);
+    }
+
+    MPI_Bcast(&copied_text[0], text_length, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+    MPI_Bcast(&query_amount, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (rank != 0) {
+        copied_queries.resize(query_amount);
+    }
+
+    for (int i = 0; i < query_amount; ++i) {
+        int query_length = static_cast<int>(copied_queries[i].size());
+        MPI_Bcast(&query_length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        if (rank != 0) {
+            copied_queries[i].resize(query_length);
+        }
+
+        MPI_Bcast(&copied_queries[i][0], query_length, MPI_CHAR, 0, MPI_COMM_WORLD);
+    }
+
+    size_t max_q_len = get_max_query_length(copied_queries);
     size_t overlap = (max_q_len > 0) ? max_q_len - 1 : 0;
 
-    size_t base_chunk_size = total_length / size;
+    size_t base_chunk_size = text_length / size;
     size_t start_offset = rank * base_chunk_size;
     size_t local_length =
-        (rank == size - 1) ? (total_length - start_offset) : base_chunk_size;
+        (rank == size - 1) ? (text_length - start_offset) : base_chunk_size;
 
     size_t send_length = local_length + ((rank == size - 1) ? 0 : overlap);
-    std::string_view local_text(text.data() + start_offset, send_length);
+    std::string_view local_text(copied_text.data() + start_offset, send_length);
 
-    std::vector<std::vector<size_t>> local_indices(queries.size());
+    std::vector<std::vector<size_t>> local_indices(copied_queries.size());
 
     // Maske jetzt für LOKALEN Text
     const size_t local_text_length = local_text.length();
     const unsigned long mask_words = (local_text_length + 63) / 64;
     auto *mask = new uint64_t[mask_words]();
 
-    for (size_t qi = 0; qi < queries.size(); ++qi) {
-        const auto &query = queries[qi];
+    for (size_t qi = 0; qi < copied_queries.size(); ++qi) {
+        const auto &query = copied_queries[qi];
         if (query.empty() || query.length() > local_text_length)
             continue;
 
@@ -108,9 +138,9 @@ find_candidate_mpi(const std::string &text,
     // einsammeln von den ranks in rank[0}
     std::vector<std::vector<size_t>> global_indices;
     if (rank == 0)
-        global_indices.resize(queries.size());
+        global_indices.resize(copied_queries.size());
 
-    for (size_t qi = 0; qi < queries.size(); ++qi) {
+    for (size_t qi = 0; qi < copied_queries.size(); ++qi) {
 
         int local_count = static_cast<int>(local_indices[qi].size());
         std::vector<int> recv_counts(size);
@@ -136,5 +166,8 @@ find_candidate_mpi(const std::string &text,
                     rank == 0 ? displs.data() : nullptr, MPI_UNSIGNED_LONG, 0,
                     MPI_COMM_WORLD);
     }
+
+    MPI_Finalize();
+
     return global_indices;
 }

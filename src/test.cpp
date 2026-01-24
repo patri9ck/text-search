@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <mpi.h>
 
 void compare_results(std::vector<std::vector<size_t>> &expected,
                      std::vector<std::vector<size_t>> &actual,
@@ -87,9 +88,7 @@ void compare_results(std::vector<std::vector<size_t>> &expected,
     }
 }
 
-int main(const int argc, char **argv) {
-    MPIManager mpi(argc, argv);
-
+int main(int argc, char **argv) {
     cxxopts::Options options("text-search-benchmark",
                              "Search for words in big texts and benchmark it");
 
@@ -120,6 +119,7 @@ int main(const int argc, char **argv) {
     std::vector<std::vector<size_t>> (*find)(const std::string &,
                                              const std::vector<std::string> &);
     Timer *timer;
+    bool mpi = false;
 
     // Sequential
     if (implementation == "std") {
@@ -144,7 +144,7 @@ int main(const int argc, char **argv) {
         find = find_hash_v2;
         timer = &hash_v2_timer;
 
-        // OpenMP
+    // OpenMP
     } else if (implementation == "std_openmp") {
         find = find_std_openmp;
         timer = &std_openmp_timer;
@@ -159,6 +159,13 @@ int main(const int argc, char **argv) {
         timer = &hash_openmp_timer;
     }
 
+    // MPI
+    else if (implementation == "candidate_mpi") {
+        find = find_candidate_mpi;
+        timer = &candidate_mpi_timer;
+        mpi = true;
+    }
+
     // OpenCL
     else if (implementation == "candidate_opencl_v1") {
         find = find_candidate_opencl_v1;
@@ -171,15 +178,22 @@ int main(const int argc, char **argv) {
         timer = &candidate_opencl_v3_timer;
     }
 
-    // MPI
-    else if (implementation == "candidate_openmpi_v1") {
-        find = find_candidate_mpi;
-        timer = &candidate_mpi_timer;
-    }
-
     else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
+    }
+
+    if (mpi) {
+        MPI_Init(&argc, &argv);
+
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+        if (rank != 0) {
+            find_candidate_mpi(std::string(), std::vector<std::string>());
+
+            return 0;
+        }
     }
 
     if (!result.count("file")) {

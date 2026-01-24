@@ -10,18 +10,6 @@ std::optional<std::string> read_file(const std::string &path,
 std::map<std::string, std::string> read_directory(const std::string &path,
                                                   bool silent = false);
 
-struct MPIManager {
-    int rank;
-    int size;
-
-    // Konstruktor initialisiert MPI und setzt den Output-Status
-    MPIManager(int argc, char **argv);
-    // Destruktor räumt auf
-    ~MPIManager();
-
-    bool is_master() const { return rank == 0; }
-};
-
 template <typename T> int countr_zero(T v) {
     static_assert(std::is_unsigned_v<T>);
 

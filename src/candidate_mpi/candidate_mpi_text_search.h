@@ -10,7 +10,7 @@ extern Timer candidate_mpi_timer;
 #endif
 
 std::vector<std::vector<size_t>>
-find_candidate_mpi(const std::string &text,
-                   const std::vector<std::string> &queries);
+find_candidate_mpi(const std::string &copied_text,
+                   const std::vector<std::string> &copied_queries);
 
 #endif

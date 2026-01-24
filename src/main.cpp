@@ -8,10 +8,9 @@
 #include "util.h"
 
 #include <iostream>
+#include <mpi.h>
 
-int main(const int argc, char **argv) {
-    MPIManager mpi(argc, argv);
-
+int main(int argc, char **argv) {
     cxxopts::Options options("text-search", "Search for words in big texts");
 
     options.add_options()(
@@ -44,6 +43,7 @@ int main(const int argc, char **argv) {
                                              const std::vector<std::string> &);
 
     std::string name;
+    bool mpi = false;
 
     if (implementation == "sequential") {
         find = find_std;
@@ -54,6 +54,7 @@ int main(const int argc, char **argv) {
     } else if (implementation == "mpi") {
         find = find_candidate_mpi;
         name = "candidate_mpi";
+        mpi = true;
     } else if (implementation == "opencl") {
         find = find_candidate_opencl_v3;
         name = "candidate_opencl_v3";
@@ -65,6 +66,19 @@ int main(const int argc, char **argv) {
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
+    }
+
+    if (mpi) {
+        MPI_Init(&argc, &argv);
+
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+        if (rank != 0) {
+            find_candidate_mpi(std::string(), std::vector<std::string>());
+
+            return 0;
+        }
     }
 
     const auto queries = result["query"].as<std::vector<std::string>>();

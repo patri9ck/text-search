@@ -52,28 +52,3 @@ std::map<std::string, std::string> read_directory(const std::string &path,
 
     return contents;
 }
-
-MPIManager::MPIManager(int argc, char **argv) {
-    int is_init = 0;
-    MPI_Initialized(&is_init);
-    if (!is_init) {
-        MPI_Init(&argc, &argv);
-    }
-
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-    // deaktiviere cou für alle außer Rank 0
-    if (!is_master()) {
-        std::cout.setstate(std::ios_base::failbit);
-        std::cerr.setstate(std::ios_base::failbit);
-    }
-}
-
-MPIManager::~MPIManager() {
-    int is_finalized = 0;
-    MPI_Finalized(&is_finalized);
-    if (!is_finalized) {
-        MPI_Finalize();
-    }
-}
