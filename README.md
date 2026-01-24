@@ -1,7 +1,17 @@
 ## Build Instructions
 
-- **Linux**
+- **Windows**
 
+- **Linux**
+This requires CMake for building, an MPI implementation (e.g. Open MPI) and, for OpenCL, an ICD loader (e.g. ocl-icd) as well as a runtime (e.g. AMD CLR for AMD).
+
+Get started by cloning the repository:
+```
+git clone https://github.com/KN-PACO/text-search.git
+cd text-search
+```
+
+Then, build it using CMake:
 ```
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
