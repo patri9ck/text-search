@@ -1,6 +1,5 @@
 #include "candidate_v2_text_search.h"
 
-#include <cstdint>
 #include <cstring>
 
 #ifdef BENCHMARK

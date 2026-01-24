@@ -14,7 +14,8 @@ int main(const int argc, char **argv) {
 
     options.add_options()(
         "i,implementation",
-        "implementation: sequential, openmp, opencl, opencl-safe, mpi, combined",
+        "implementation: sequential, openmp, opencl, opencl-safe, mpi, "
+        "combined",
         cxxopts::value<std::string>()->default_value("openmp"))(
         "f,file", "file to search in",
         cxxopts::value<std::vector<std::string>>())(
@@ -57,7 +58,7 @@ int main(const int argc, char **argv) {
     } else if (implementation == "opencl-safe") {
         find = find_candidate_opencl_v2;
         name = "candidate_opencl_v2";
-    }  else if (implementation == "combined") {
+    } else if (implementation == "combined") {
 
     } else {
         std::cerr << "Unknown implementation." << std::endl;
@@ -117,14 +118,15 @@ int main(const int argc, char **argv) {
 
     timer.stop_total();
 
-    std::cout << "Finished in " << timer.get_total_time() << " ms." << std::endl;
+    std::cout << "Finished in " << timer.get_total_time() << " ms."
+              << std::endl;
 
     for (int i = 0; i < queries.size(); ++i) {
         const auto &query = queries[i];
 
         std::cout << "Query " << query << ":" << std::endl;
 
-        const auto& indices = matches[i];
+        const auto &indices = matches[i];
 
         for (auto it = texts.begin(); it != texts.end(); ++it) {
             std::cout << it->first << ": ";

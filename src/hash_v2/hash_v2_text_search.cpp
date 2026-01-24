@@ -47,7 +47,6 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     }
 
     for (auto const &[query_length, query_indices] : length_groups) {
-
         if (query_length == 0 || query_length > text_length) {
             continue;
         }

@@ -1,7 +1,8 @@
 #include "candidate_v3_text_search.h"
 
-#include <cstdint>
 #include <cstring>
+
+#include "../util.h"
 
 #ifdef BENCHMARK
 Timer candidate_v3_timer = Timer(std::string("candidate_v3"));
@@ -49,7 +50,7 @@ find_candidate_v3(const std::string &text,
             auto w = mask[word];
 
             while (w != 0) {
-                auto index = word * 64 + std::countr_zero(w);
+                const auto index = word * 64 + countr_zero(w);
 
                 if (test_candidate(index, text, query)) {
                     indices[i].push_back(index);

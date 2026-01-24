@@ -1,13 +1,10 @@
 #include "hash_openmp_text_search.h"
 
 #include <algorithm>
-#include <cstdint>
 #include <cstring>
 #include <numeric>
 #include <omp.h>
-#include <string>
 #include <unordered_map>
-#include <vector>
 
 #define PRIME 1000003
 
@@ -58,9 +55,10 @@ find_hash_openmp(const std::string &text,
     std::vector<size_t> query_indices(query_amount);
     std::iota(query_indices.begin(), query_indices.end(), 0);
 
-    std::ranges::sort(query_indices, [&](size_t a, size_t b) {
-        return queries[a].length() < queries[b].length();
-    });
+    std::sort(query_indices.begin(), query_indices.end(),
+              [&](size_t a, size_t b) {
+                  return queries[a].length() < queries[b].length();
+              });
 
     std::vector<LengthBlock> blocks;
 

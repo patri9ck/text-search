@@ -5,6 +5,8 @@
 #include <iostream>
 #include <mpi.h>
 
+#include "../util.h"
+
 #ifdef BENCHMARK
 Timer candidate_mpi_timer = Timer(std::string("candidate_mpi"));
 #endif
@@ -42,7 +44,7 @@ bool test_candidate(const size_t index, const std::string_view text,
 
 std::vector<std::vector<size_t>>
 find_candidate_mpi(const std::string &text,
-                          const std::vector<std::string> &queries) {
+                   const std::vector<std::string> &queries) {
     int initialized = 0;
     MPI_Initialized(&initialized);
 
@@ -86,7 +88,7 @@ find_candidate_mpi(const std::string &text,
             uint64_t w = mask[word];
 
             while (w != 0) {
-                size_t bit = std::countr_zero(w);
+                size_t bit = countr_zero(w);
                 size_t local_index = word * 64 + bit;
 
                 // Nur prüfen wenn Query komplett im lokalen Text liegt

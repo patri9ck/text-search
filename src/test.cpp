@@ -17,7 +17,6 @@
 #include "util.h"
 
 #include <algorithm>
-
 #include <iostream>
 
 void compare_results(std::vector<std::vector<size_t>> &expected,
@@ -44,8 +43,8 @@ void compare_results(std::vector<std::vector<size_t>> &expected,
         auto &expected_indices = expected[i];
         auto &actual_indices = actual[i];
 
-        std::ranges::sort(expected_indices);
-        std::ranges::sort(actual_indices);
+        std::sort(expected_indices.begin(), expected_indices.end());
+        std::sort(actual_indices.begin(), actual_indices.end());
 
         if (expected_indices == actual_indices) {
             continue;

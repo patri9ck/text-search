@@ -20,7 +20,7 @@ void Timer::stop_total() {
 void Timer::start_sequential_part(int index, const std::string &label) {
     const auto now = std::chrono::high_resolution_clock::now();
 
-    if (sequential_parts.contains(index)) {
+    if (sequential_parts.count(index)) {
         sequential_parts.at(index).start = now;
     } else {
         sequential_parts.emplace(index, Part{label, now, 0});
@@ -40,7 +40,7 @@ void Timer::stop_sequential_part(int index) {
 void Timer::start_parallel_part(int index, const std::string &label) {
     const auto now = std::chrono::high_resolution_clock::now();
 
-    if (parallel_parts.contains(index)) {
+    if (parallel_parts.count(index)) {
         parallel_parts.at(index).start = now;
     } else {
         parallel_parts.emplace(index, Part{label, now, 0});

@@ -1,9 +1,9 @@
 #include "candidate_openmp_v2_text_search.h"
 
-#include <cstdint>
 #include <cstring>
-#include <iostream>
 #include <omp.h>
+
+#include "../util.h"
 
 #ifdef BENCHMARK
 Timer candidate_openmp_v2_timer = Timer(std::string("candidate_openmp_v2"));
@@ -64,7 +64,7 @@ find_candidate_openmp_v2(const std::string &text,
             uint64_t w = mask[i * mask_words + word];
 
             while (w != 0) {
-                auto index = word * 64 + std::countr_zero(w);
+                const auto index = word * 64 + countr_zero(w);
 
                 if (test_candidate(index, text, query)) {
                     indices[i].push_back(index);

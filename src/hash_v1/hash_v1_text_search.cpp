@@ -1,9 +1,6 @@
 #include "hash_v1_text_search.h"
 
-#include <cstdint>
 #include <cstring>
-#include <string>
-#include <vector>
 
 #define PRIME 1000003
 

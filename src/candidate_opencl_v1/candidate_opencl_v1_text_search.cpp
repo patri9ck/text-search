@@ -1,12 +1,11 @@
 #include "candidate_opencl_v1_text_search.h"
 
 #include <CL/cl.h>
-#include <algorithm>
-#include <cstring>
-#include <iostream>
 #include <sstream>
-#include <string>
-#include <vector>
+
+#include "../util.h"
+
+#include <cstring>
 
 #ifdef BENCHMARK
 Timer candidate_opencl_v1_timer = Timer(std::string("candidate_opencl_v1"));
@@ -207,7 +206,7 @@ find_candidate_opencl_v1(const std::string &text,
                 uint32_t w = mask[group_index + word];
 
                 while (w != 0) {
-                    const auto index = std::countr_zero(w);
+                    const auto index = countr_zero(w);
 
                     indices[j].push_back((g << 8) + (word << 5) + index);
 

@@ -1,12 +1,8 @@
 #include "candidate_opencl_v2_text_search.h"
 
 #include <CL/cl.h>
-#include <algorithm>
 #include <cstring>
-#include <iostream>
 #include <sstream>
-#include <string>
-#include <vector>
 
 #ifdef BENCHMARK
 Timer candidate_opencl_v2_timer = Timer(std::string("candidate_opencl_v2"));
