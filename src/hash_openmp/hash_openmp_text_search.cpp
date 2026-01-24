@@ -78,8 +78,7 @@ find_hash_openmp(const std::string &text,
         }
     }
 
-#pragma omp parallel for schedule(dynamic) default(none)                       \
-    shared(blocks, query_indices, queries, text, text_length, indices)
+#pragma omp parallel for schedule(dynamic) default(none) shared(blocks, query_indices, queries, text, text_length, indices)
     for (const auto &[length, start_idx, count] : blocks) {
         std::unordered_map<uint64_t, std::vector<size_t>> hash_to_queries;
 
