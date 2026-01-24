@@ -34,7 +34,7 @@ uint64_t hash_string(const char *s, const size_t length) {
 
 struct LengthBlock {
         size_t length;
-        size_t start_idx;
+        size_t start;
         size_t count;
 };
 
@@ -77,11 +77,17 @@ find_hash_openmp(const std::string &text,
     }
 
 #pragma omp parallel for schedule(dynamic) default(none) shared(blocks, query_indices, queries, text, text_length, indices)
-    for (const auto &[length, start_idx, count] : blocks) {
+    for (int b = 0; b < static_cast<int>(blocks.size()); ++b) {
+        const auto& block = blocks[b];
+
+        const size_t length = block.length;
+        const size_t start = block.start;
+        const size_t count = block.count;
+
         std::unordered_map<uint64_t, std::vector<size_t>> hash_to_queries;
 
         for (size_t i = 0; i < count; ++i) {
-            const size_t q_idx = query_indices[start_idx + i];
+            const size_t q_idx = query_indices[start + i];
             const uint64_t h = hash_string(queries[q_idx].data(), length);
             hash_to_queries[h].push_back(q_idx);
         }
