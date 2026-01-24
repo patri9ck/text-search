@@ -15,9 +15,6 @@
     \and
     Döbele, Max\\
     \texttt{max.doebele@htwg-konstanz.de}
-    \and
-    Friesen, Marcel\\
-    \texttt{marcel.friesen@htwg-konstanz.de}
 }
 \date{06 February 2026}
 
@@ -309,8 +306,9 @@ find_candidate_v1(const std::string &text,
 
     \subsection{Evaluation}
 
-    \subsection{Parallel Implementation}
-
+    \section{Parallel Implementation}
+    
+    \subsection{OpenMP}
     \subsubsection{Parallelize the hash approach}
     To parallelize the hash approach, we assign a group of queries of identical length to each thread.
     Since OpenMP requires a random access iterator or an integer index for the distribution of loops \texttt{\#pragma omp parallel for},
@@ -340,8 +338,11 @@ find_candidate_v1(const std::string &text,
         }
     }
     \end{lstlisting}
-
-
+    
+    \subsection{OpenCL}
+    
+    \subsection{OpenMPI}
+    
     \section{Summary}
 
     \bibliographystyle{plain}
