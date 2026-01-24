@@ -55,7 +55,12 @@ This will create two executables in `build/`, `text-search` and `text-search-tes
 The command line tool `text-search` provides the best implementations using OpenMP, MPI, OpenCL (safe or unsafe), them combined, or
 simply a single thread (sequential).
 
-Example call:
+Example call (Windows):
+```
+build/Release/text-search.exe -i openmp -d data -f README.md -q text -q search
+```
+
+Example call (Linux):
 
 ```
 build/text-search -i openmp -d data -f README.md -q text -q search
@@ -67,8 +72,13 @@ through and searches for the words
 
 ## Running Tests
 
-Example call:
+Example call (Windows):
 
+```
+build/Release/text-search-test.exe -i candidate_v3 -d data -f common-words.txt -c
+```
+
+Example call (Linux):
 ```
 build/text-search-test -i candidate_v3 -d data -f common-words.txt -c
 ```
@@ -81,7 +91,13 @@ test it against the reference implementation. Run `build/text-search-test --help
 
 To create plots and CSV files, `benchmark.py` exists which calls `text-search-test`. It stores its results in `doc/`.
 
-Example call:
+Example call (Windows):
+
+```
+python3 benchmark.py -i openmp -e build/Release/text-search-test.exe -m queries -q common-words.txt -b data
+```
+
+Example call (Linux):
 
 ```
 python3 benchmark.py -i openmp -e build/text-search-test -m queries -q common-words.txt -b data
