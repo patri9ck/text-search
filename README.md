@@ -27,8 +27,8 @@ cd text-search
 
 Finally, build the project using CMake:
 ```
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DOpenCL_ROOT=opencl
-cmake --build build
+cmake -S . -B build -DOpenCL_ROOT="$pwd\OpenCL-SDK-v2025.07.23-Win-x64"
+cmake --build build --config Release
 ```
 
 This will create two executables in `build/`, `text-search.exe` and `text-search-test.exe`.
