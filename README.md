@@ -14,7 +14,7 @@ choose **Ändern**.
 
 To use OpenCL, the OpenCL SDK from Khronos is needed. Binaries can be downloaded from
 the [official repository](https://github.com/KhronosGroup/OpenCL-SDK/releases).
-To make things easier, this repository already bundles binaries for the OpenCL SDK v2025.07.23 in the `opencl/`
+To make things easier, this repository already bundles binaries for the OpenCL SDK v2025.07.23 in the `OpenCL-SDK-v2025.07.23-Win-x64/`
 directory. Later, when building the project, we can point CMake to this directory.
 
 For MPI, simply install [msmpisdk.msi **and
