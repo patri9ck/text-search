@@ -1,8 +1,13 @@
 ## Build Instructions
 
-- **Windows**
+### Windows (CMake)
+First, install [Git](https://git-scm.com/install/windows) and [CMake](https://cmake.org/download/). Then, open PowerShell and clone the repository:
+```
+git clone https://github.com/KN-PACO/text-search.git
+cd text-search
+```
 
-- **Linux**
+### Linux
 This requires CMake for building, an MPI implementation (e.g. Open MPI) and, for OpenCL, an ICD loader (e.g. ocl-icd) as well as a runtime (e.g. AMD CLR for AMD).
 
 Get started by cloning the repository:
