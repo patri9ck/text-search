@@ -10,6 +10,8 @@
 #include <iostream>
 
 int main(const int argc, char **argv) {
+    MPIManager mpi(argc, argv);
+
     cxxopts::Options options("text-search", "Search for words in big texts");
 
     options.add_options()(

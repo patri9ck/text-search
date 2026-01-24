@@ -45,14 +45,6 @@ bool test_candidate(const size_t index, const std::string_view text,
 std::vector<std::vector<size_t>>
 find_candidate_mpi(const std::string &text,
                    const std::vector<std::string> &queries) {
-    int initialized = 0;
-    MPI_Initialized(&initialized);
-
-    if (!initialized) {
-        int argc = 0;
-        char **argv = nullptr;
-        MPI_Init(&argc, &argv);
-    }
 
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -144,6 +136,5 @@ find_candidate_mpi(const std::string &text,
                     rank == 0 ? displs.data() : nullptr, MPI_UNSIGNED_LONG, 0,
                     MPI_COMM_WORLD);
     }
-    MPI_Finalize();
     return global_indices;
 }

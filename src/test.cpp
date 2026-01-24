@@ -88,6 +88,8 @@ void compare_results(std::vector<std::vector<size_t>> &expected,
 }
 
 int main(const int argc, char **argv) {
+    MPIManager mpi(argc, argv);
+
     cxxopts::Options options("text-search-benchmark",
                              "Search for words in big texts and benchmark it");
 
