@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
         find = find_hash_v2;
         timer = &hash_v2_timer;
 
-        // OpenMP
+    // OpenMP
     } else if (implementation == "std_openmp") {
         find = find_std_openmp;
         timer = &std_openmp_timer;
