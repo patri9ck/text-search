@@ -1,11 +1,37 @@
 ## Build Instructions
 
 ### Windows (CMake)
-First, install [Git](https://git-scm.com/install/windows) and [CMake](https://cmake.org/download/). Then, open PowerShell and clone the repository:
+Install Visual Studio with (at least) the following components:
+- MSVC-Buildtools für x64/x86 (neueste Version)
+- C++-CMake-Tools für Windows
+- Git für Windows
+- Windows 11 SDK (10.0.22621.0)
+
+In case you have Visual Studio already installed and a component is missing, open the **Visual Studio Installer** and choose **Ändern**.
+
+To use OpenCL, the OpenCL SDK from Khronos is needed. Binaries can be downloaded from the [official repository](https://github.com/KhronosGroup/OpenCL-SDK/releases).
+To make things easier, this repository already bundles binaries for the OpenCL SDK v2025.07.23 in the `opencl/` directory. Later, when building the project, we can point CMake to this directory.
+
+For MPI, simply install [msmpisdk.msi](https://learn.microsoft.com/de-de/message-passing-interface/microsoft-mpi).
+
+Then, open **Developer PowerShell for VS** and change the directory to a location where you have sufficient permission, e.g.:
+```
+cd ~
+```
+
+Next, clone the repository.
 ```
 git clone https://github.com/KN-PACO/text-search.git
 cd text-search
 ```
+
+Finally, build the project using CMake:
+```
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DOpenCL_ROOT=opencl
+cmake --build build
+```
+
+This will create two executables in `build/`, `text-search.exe` and `text-search-test.exe`.
 
 ### Linux
 This requires CMake for building, an MPI implementation (e.g. Open MPI) and, for OpenCL, an ICD loader (e.g. ocl-icd) as well as a runtime (e.g. AMD CLR for AMD).
@@ -22,8 +48,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-This will create two executables in `build/`, `text-search` and `text-search-test` (or`text-search.exe` and
-`text-search-test.exe` on Windows, respectively).
+This will create two executables in `build/`, `text-search` and `text-search-test`.
 
 ## Using the Command Line Tool
 
