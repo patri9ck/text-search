@@ -119,7 +119,7 @@ Example call (Linux):
 python3 benchmark.py -i openmp -e build/text-search-test -m queries -q common-words.txt -b data
 ```
 
-Run `python3 benchmark.py --help` for an overview of all options.
+Use the `--help` options for an overview of all options.
 
 ## Downloading Ebooks from Project Gutenberg
 
