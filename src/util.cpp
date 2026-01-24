@@ -5,7 +5,7 @@
 #include <iostream>
 #include <sstream>
 
-std::optional<std::string> read_file(const std::string &path, bool silent) {
+std::optional<std::string> read_file(const std::string &path, const bool silent) {
     std::ifstream f(path, std::ios::binary);
     if (!f.is_open()) {
         if (!silent) {
