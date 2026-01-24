@@ -40,7 +40,7 @@ cmake -S . -B build -DOpenCL_ROOT="$pwd\OpenCL-SDK-v2025.07.23-Win-x64"
 cmake --build build --config Release
 ```
 
-This will create two executables in `build/`, `text-search.exe` and `text-search-test.exe`.
+This will create two executables in `build/Release/`, `text-search.exe` and `text-search-test.exe`.
 
 ### Linux
 
