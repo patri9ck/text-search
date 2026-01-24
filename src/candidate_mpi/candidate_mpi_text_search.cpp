@@ -168,5 +168,6 @@ find_candidate_mpi(const std::string &text,
     }
 
     MPI_Finalize();
+
     return indices;
 }
