@@ -17,8 +17,7 @@ the [official repository](https://github.com/KhronosGroup/OpenCL-SDK/releases).
 To make things easier, this repository already bundles binaries for the OpenCL SDK v2025.07.23 in the `OpenCL-SDK-v2025.07.23-Win-x64/`
 directory. Later, when building the project, we can point CMake to this directory.
 
-For MPI, simply install [msmpisdk.msi **and
-** msmpisetup.exe](https://learn.microsoft.com/de-de/message-passing-interface/microsoft-mpi).
+For MPI, simply install [msmpisdk.msi and msmpisetup.exe](https://learn.microsoft.com/de-de/message-passing-interface/microsoft-mpi).
 
 Then, open **Developer PowerShell for VS** and change the directory to a location where you have sufficient permission,
 e.g.:
