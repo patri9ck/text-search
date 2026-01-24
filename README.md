@@ -1,31 +1,41 @@
 ## Build Instructions
 
 ### Windows
+
 Install Visual Studio with (at least) the following components:
+
 - MSVC-Buildtools für x64/x86 (neueste Version)
 - C++-CMake-Tools für Windows
 - Git für Windows
 - Windows 11 SDK (10.0.22621.0)
 
-In case you have Visual Studio already installed and a component is missing, open the **Visual Studio Installer** and choose **Ändern**.
+In case you have Visual Studio already installed and a component is missing, open the **Visual Studio Installer** and
+choose **Ändern**.
 
-To use OpenCL, the OpenCL SDK from Khronos is needed. Binaries can be downloaded from the [official repository](https://github.com/KhronosGroup/OpenCL-SDK/releases).
-To make things easier, this repository already bundles binaries for the OpenCL SDK v2025.07.23 in the `opencl/` directory. Later, when building the project, we can point CMake to this directory.
+To use OpenCL, the OpenCL SDK from Khronos is needed. Binaries can be downloaded from
+the [official repository](https://github.com/KhronosGroup/OpenCL-SDK/releases).
+To make things easier, this repository already bundles binaries for the OpenCL SDK v2025.07.23 in the `opencl/`
+directory. Later, when building the project, we can point CMake to this directory.
 
-For MPI, simply install [msmpisdk.msi **and** msmpisetup.exe](https://learn.microsoft.com/de-de/message-passing-interface/microsoft-mpi).
+For MPI, simply install [msmpisdk.msi **and
+** msmpisetup.exe](https://learn.microsoft.com/de-de/message-passing-interface/microsoft-mpi).
 
-Then, open **Developer PowerShell for VS** and change the directory to a location where you have sufficient permission, e.g.:
+Then, open **Developer PowerShell for VS** and change the directory to a location where you have sufficient permission,
+e.g.:
+
 ```
 cd ~
 ```
 
 Next, clone the repository.
+
 ```
 git clone https://github.com/KN-PACO/text-search.git
 cd text-search
 ```
 
 Finally, build the project using CMake:
+
 ```
 cmake -S . -B build -DOpenCL_ROOT="$pwd\OpenCL-SDK-v2025.07.23-Win-x64"
 cmake --build build --config Release
@@ -34,15 +44,19 @@ cmake --build build --config Release
 This will create two executables in `build/`, `text-search.exe` and `text-search-test.exe`.
 
 ### Linux
-This requires CMake for building, an MPI implementation (e.g. Open MPI) and, for OpenCL, an ICD loader (e.g. ocl-icd) as well as a runtime (e.g. AMD CLR for AMD).
+
+This requires CMake for building, an MPI implementation (e.g. Open MPI) and, for OpenCL, an ICD loader (e.g. ocl-icd) as
+well as a runtime (e.g. AMD CLR for AMD).
 
 Get started by cloning the repository:
+
 ```
 git clone https://github.com/KN-PACO/text-search.git
 cd text-search
 ```
 
 Then, build it using CMake:
+
 ```
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
@@ -52,10 +66,12 @@ This will create two executables in `build/`, `text-search` and `text-search-tes
 
 ## Using the Command Line Tool
 
-The command line tool `text-search` provides the best implementations using OpenMP, MPI, OpenCL (safe or unsafe), them combined, or
+The command line tool `text-search` provides the best implementations using OpenMP, MPI, OpenCL (safe or unsafe), them
+combined, or
 simply a single thread (sequential).
 
 Example call (Windows):
+
 ```
 build/Release/text-search.exe -i openmp -d data -f README.md -q text -q search
 ```
@@ -79,6 +95,7 @@ build/Release/text-search-test.exe -i candidate_v3 -d data -f common-words.txt -
 ```
 
 Example call (Linux):
+
 ```
 build/text-search-test -i candidate_v3 -d data -f common-words.txt -c
 ```
