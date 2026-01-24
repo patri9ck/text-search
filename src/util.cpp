@@ -4,7 +4,6 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <mpi.h>
 
 std::optional<std::string> read_file(const std::string &path, bool silent) {
     std::ifstream f(path, std::ios::binary);
