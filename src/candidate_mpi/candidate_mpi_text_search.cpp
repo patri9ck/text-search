@@ -13,21 +13,13 @@ Timer candidate_mpi_timer = Timer(std::string("candidate_mpi"));
 
 namespace {
 
-size_t get_max_query_length(const std::vector<std::string> &queries) {
-    size_t max_len = 0;
-    for (const auto &q : queries)
-        max_len = std::max(max_len, q.length());
-    return max_len;
-}
-
 void find_candidates(const size_t text_length, uint64_t *mask,
                      const std::string_view &text, const std::string &query) {
     const auto query_length = query.length();
-
     const auto mid = query_length >> 1;
     const auto end = query_length - 1;
 
-    for (size_t i = 0; i <= text_length - query_length; ++i) {
+    for (size_t i = 0; i + query_length <= text_length; ++i) {
         if (text[i] == query[0] && text[i + mid] == query[mid] &&
             text[i + end] == query[end]) {
             mask[i >> 6] |= static_cast<uint64_t>(1) << (i & 63);
@@ -53,121 +45,128 @@ find_candidate_mpi(const std::string &text,
     auto copied_text = text;
     auto copied_queries = queries;
 
-    auto text_length = static_cast<int>(copied_text.length());
-    auto query_amount = static_cast<int>(copied_queries.size());
+    int text_length = static_cast<int>(copied_text.length());
+    int query_amount = static_cast<int>(copied_queries.size());
 
     MPI_Bcast(&text_length, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-    if (rank != 0) {
-        copied_text.resize(text_length);
-    }
-
-    MPI_Bcast(&copied_text[0], text_length, MPI_CHAR, 0, MPI_COMM_WORLD);
-
     MPI_Bcast(&query_amount, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     if (rank != 0) {
         copied_queries.resize(query_amount);
     }
 
+    int maximum_query_length = 0;
+
     for (int i = 0; i < query_amount; ++i) {
-        int query_length = static_cast<int>(copied_queries[i].size());
+        int query_length =
+            rank == 0 ? static_cast<int>(copied_queries[i].size()) : 0;
+
         MPI_Bcast(&query_length, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
         if (rank != 0) {
             copied_queries[i].resize(query_length);
         }
 
-        MPI_Bcast(&copied_queries[i][0], query_length, MPI_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Bcast(copied_queries[i].data(), query_length, MPI_CHAR, 0,
+                  MPI_COMM_WORLD);
+
+        maximum_query_length = std::max(maximum_query_length, query_length);
     }
 
-    size_t max_q_len = get_max_query_length(copied_queries);
-    size_t overlap = (max_q_len > 0) ? max_q_len - 1 : 0;
+    const int overlap = maximum_query_length > 0 ? maximum_query_length - 1 : 0;
+    const int base_chunk_size = text_length / size;
 
-    size_t base_chunk_size = text_length / size;
-    size_t start_offset = rank * base_chunk_size;
-    size_t local_length =
-        (rank == size - 1) ? (text_length - start_offset) : base_chunk_size;
+    std::vector<int> send_counts(size);
+    std::vector<int> displacements(size);
 
-    size_t send_length = local_length + ((rank == size - 1) ? 0 : overlap);
-    std::string_view local_text(copied_text.data() + start_offset, send_length);
+    for (int r = 0; r < size; ++r) {
+        displacements[r] = r * base_chunk_size;
+        send_counts[r] =
+            (r == size - 1 ? text_length - displacements[r] : base_chunk_size) +
+            (r == size - 1 ? 0 : overlap);
+    }
 
-    std::vector<std::vector<size_t>> local_indices(copied_queries.size());
+    const int local_length =
+        rank == size - 1 ? text_length - displacements[rank] : base_chunk_size;
 
-    // Maske jetzt für LOKALEN Text
-    const size_t local_text_length = local_text.length();
-    const unsigned long mask_words = (local_text_length + 63) / 64;
-    auto *mask = new uint64_t[mask_words]();
+    std::string local_buffer(send_counts[rank], '\0');
 
-    for (size_t qi = 0; qi < copied_queries.size(); ++qi) {
-        const auto &query = copied_queries[qi];
-        if (query.empty() || query.length() > local_text_length)
+    MPI_Scatterv(copied_text.data(), send_counts.data(), displacements.data(),
+                 MPI_CHAR, local_buffer.data(), send_counts[rank], MPI_CHAR, 0,
+                 MPI_COMM_WORLD);
+
+    const std::string_view local_text(local_buffer.data(), local_buffer.size());
+
+    std::vector<std::vector<size_t>> local_indices(query_amount);
+
+    const auto local_text_length = local_text.length();
+
+    const size_t mask_words = (local_text_length + 63) / 64;
+    std::vector<uint64_t> mask(mask_words);
+
+    for (int i = 0; i < query_amount; ++i) {
+        const auto &query = copied_queries[i];
+
+        if (query.length() > local_text_length) {
             continue;
+        }
 
-        find_candidates(local_text_length, mask, local_text, query);
+        find_candidates(local_text_length, mask.data(), local_text, query);
 
-        for (unsigned long word = 0; word < mask_words; ++word) {
+        for (size_t word = 0; word < mask_words; ++word) {
             uint64_t w = mask[word];
 
             while (w != 0) {
-                size_t bit = countr_zero(w);
-                size_t local_index = word * 64 + bit;
+                size_t index = word * 64 + countr_zero(w);
 
-                // Nur prüfen wenn Query komplett im lokalen Text liegt
-                if (local_index + query.length() <= local_text_length) {
-
-                    if (test_candidate(local_index, local_text, query)) {
-
-                        // Nur Matches speichern, die im echten Chunk starten
-                        if (local_index < local_length) {
-                            size_t global_index = start_offset + local_index;
-                            local_indices[qi].push_back(global_index);
-                        }
-                    }
+                if (index + query.length() <= local_text_length &&
+                    index < static_cast<size_t>(local_length) &&
+                    test_candidate(index, local_text, query)) {
+                    local_indices[i].push_back(displacements[rank] + index);
                 }
 
                 w &= w - 1;
             }
         }
 
-        std::memset(mask, 0, mask_words * sizeof(uint64_t));
+        std::fill(mask.begin(), mask.end(), 0);
     }
 
-    delete[] mask;
+    std::vector<std::vector<size_t>> indices;
 
-    // einsammeln von den ranks in rank[0}
-    std::vector<std::vector<size_t>> global_indices;
-    if (rank == 0)
-        global_indices.resize(copied_queries.size());
+    if (rank == 0) {
+        indices.resize(query_amount);
+    }
 
-    for (size_t qi = 0; qi < copied_queries.size(); ++qi) {
+    for (int i = 0; i < query_amount; ++i) {
+        int local_count = static_cast<int>(local_indices[i].size());
 
-        int local_count = static_cast<int>(local_indices[qi].size());
-        std::vector<int> recv_counts(size);
+        std::vector<int> counts(size);
 
-        MPI_Gather(&local_count, 1, MPI_INT, recv_counts.data(), 1, MPI_INT, 0,
+        MPI_Gather(&local_count, 1, MPI_INT, counts.data(), 1, MPI_INT, 0,
                    MPI_COMM_WORLD);
 
-        std::vector<int> displs;
-        size_t total_recv = 0;
-
         if (rank == 0) {
-            displs.resize(size);
-            for (int r = 0; r < size; ++r) {
-                displs[r] = total_recv;
-                total_recv += recv_counts[r];
-            }
-            global_indices[qi].resize(total_recv);
-        }
+            std::vector<int> offsets(size);
+            int total = 0;
 
-        MPI_Gatherv(local_indices[qi].data(), local_count, MPI_UNSIGNED_LONG,
-                    rank == 0 ? global_indices[qi].data() : nullptr,
-                    rank == 0 ? recv_counts.data() : nullptr,
-                    rank == 0 ? displs.data() : nullptr, MPI_UNSIGNED_LONG, 0,
-                    MPI_COMM_WORLD);
+            for (int r = 0; r < size; ++r) {
+                offsets[r] = total;
+                total += counts[r];
+            }
+
+            indices[i].resize(total);
+
+            MPI_Gatherv(local_indices[i].data(), local_count, MPI_UINT64_T,
+                        indices[i].data(), counts.data(), offsets.data(),
+                        MPI_UINT64_T, 0, MPI_COMM_WORLD);
+        } else {
+            MPI_Gatherv(local_indices[i].data(), local_count, MPI_UINT64_T,
+                        nullptr, nullptr, nullptr, MPI_UINT64_T, 0,
+                        MPI_COMM_WORLD);
+        }
     }
 
     MPI_Finalize();
-
-    return global_indices;
+    return indices;
 }
