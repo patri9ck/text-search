@@ -33,8 +33,6 @@ template <typename T> int countr_zero(T v) {
     } else {
         return __builtin_ctzll(static_cast<unsigned long long>(v));
     }
-#else
-    #error "unsupported compiler"
 #endif
 }
 
