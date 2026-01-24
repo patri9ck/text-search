@@ -83,7 +83,7 @@ build/text-search -i openmp -d data -f README.md -q text -q search
 
 This uses the best OpenMP implementation, loads all files in the directory `data/` and the file `README.md` to look
 through and searches for the words
-`text` and `search`. Run `build/text-search --help` for a list of all options.
+`text` and `search`. Use the `--help` option for a list of all options.
 
 ## Running Tests
 
@@ -101,7 +101,7 @@ build/text-search-test -i candidate_v3 -d data -f common-words.txt -c
 
 This will load all books from the directory `data/`, all queries in the file `common-words.txt`, run the `candidate_v3`
 implementation and
-test it against the reference implementation. Run `build/text-search-test --help` for an overview of all options.
+test it against the reference implementation. Run `--help` for an overview of all options.
 
 ## Creating Plots
 
