@@ -142,6 +142,8 @@ python3 benchmark.py -i openmp -e build/text-search-test -m queries -q common-wo
 
 Use the `--help` options for an overview of all options.
 
+Existing plots and CSV files can already be found in the `doc/` directory.
+
 ## Downloading Ebooks from Project Gutenberg
 
 To download the top 100 ebooks from Project Gutenberg into `data/`, run:
@@ -149,6 +151,8 @@ To download the top 100 ebooks from Project Gutenberg into `data/`, run:
 ```
 python3 download-gutenberg-ebooks.py
 ```
+
+The repository already includes the top 100 from December 2025.
 
 ## Implementations Overview
 
