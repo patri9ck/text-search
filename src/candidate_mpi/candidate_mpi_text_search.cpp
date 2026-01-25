@@ -37,10 +37,9 @@ bool test_candidate(const size_t index, const std::string_view text,
 std::vector<std::vector<size_t>>
 find_candidate_mpi(const std::string &text,
                    const std::vector<std::string> &queries) {
-
     int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    run_mpi(MPI_Comm_rank(MPI_COMM_WORLD, &rank));
+    run_mpi(MPI_Comm_size(MPI_COMM_WORLD, &size));
 
     auto copied_text = text;
     auto copied_queries = queries;
@@ -48,8 +47,8 @@ find_candidate_mpi(const std::string &text,
     int text_length = static_cast<int>(copied_text.length());
     int query_amount = static_cast<int>(copied_queries.size());
 
-    MPI_Bcast(&text_length, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&query_amount, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    run_mpi(MPI_Bcast(&text_length, 1, MPI_INT, 0, MPI_COMM_WORLD));
+    run_mpi(MPI_Bcast(&query_amount, 1, MPI_INT, 0, MPI_COMM_WORLD));
 
     if (rank != 0) {
         copied_queries.resize(query_amount);
@@ -61,14 +60,14 @@ find_candidate_mpi(const std::string &text,
         int query_length =
             rank == 0 ? static_cast<int>(copied_queries[i].size()) : 0;
 
-        MPI_Bcast(&query_length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        run_mpi(MPI_Bcast(&query_length, 1, MPI_INT, 0, MPI_COMM_WORLD));
 
         if (rank != 0) {
             copied_queries[i].resize(query_length);
         }
 
-        MPI_Bcast(copied_queries[i].data(), query_length, MPI_CHAR, 0,
-                  MPI_COMM_WORLD);
+        run_mpi(MPI_Bcast(copied_queries[i].data(), query_length, MPI_CHAR, 0,
+                          MPI_COMM_WORLD));
 
         maximum_query_length = std::max(maximum_query_length, query_length);
     }
@@ -91,9 +90,9 @@ find_candidate_mpi(const std::string &text,
 
     std::string local_buffer(send_counts[rank], '\0');
 
-    MPI_Scatterv(copied_text.data(), send_counts.data(), displacements.data(),
-                 MPI_CHAR, local_buffer.data(), send_counts[rank], MPI_CHAR, 0,
-                 MPI_COMM_WORLD);
+    run_mpi(MPI_Scatterv(copied_text.data(), send_counts.data(),
+                         displacements.data(), MPI_CHAR, local_buffer.data(),
+                         send_counts[rank], MPI_CHAR, 0, MPI_COMM_WORLD));
 
     const std::string_view local_text(local_buffer.data(), local_buffer.size());
 
@@ -143,8 +142,8 @@ find_candidate_mpi(const std::string &text,
 
         std::vector<int> counts(size);
 
-        MPI_Gather(&local_count, 1, MPI_INT, counts.data(), 1, MPI_INT, 0,
-                   MPI_COMM_WORLD);
+        run_mpi(MPI_Gather(&local_count, 1, MPI_INT, counts.data(), 1, MPI_INT,
+                           0, MPI_COMM_WORLD));
 
         if (rank == 0) {
             std::vector<int> offsets(size);
@@ -157,17 +156,18 @@ find_candidate_mpi(const std::string &text,
 
             indices[i].resize(total);
 
-            MPI_Gatherv(local_indices[i].data(), local_count, MPI_UINT64_T,
-                        indices[i].data(), counts.data(), offsets.data(),
-                        MPI_UINT64_T, 0, MPI_COMM_WORLD);
+            run_mpi(MPI_Gatherv(local_indices[i].data(), local_count,
+                                MPI_UINT64_T, indices[i].data(), counts.data(),
+                                offsets.data(), MPI_UINT64_T, 0,
+                                MPI_COMM_WORLD));
         } else {
-            MPI_Gatherv(local_indices[i].data(), local_count, MPI_UINT64_T,
+            run_mpi(MPI_Gatherv(local_indices[i].data(), local_count, MPI_UINT64_T,
                         nullptr, nullptr, nullptr, MPI_UINT64_T, 0,
-                        MPI_COMM_WORLD);
+                        MPI_COMM_WORLD)=;
         }
     }
 
-    MPI_Finalize();
+    run_mpi(MPI_Finalize());
 
     return indices;
 }

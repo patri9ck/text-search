@@ -71,8 +71,10 @@ int main(int argc, char **argv) {
     if (mpi) {
         MPI_Init(&argc, &argv);
 
+        MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+
         int rank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        run_mpi(MPI_Comm_rank(MPI_COMM_WORLD, &rank));
 
         if (rank != 0) {
             find(std::string(), std::vector<std::string>());

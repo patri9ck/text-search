@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <map>
+#include <mpi.h>
 #include <optional>
 #include <string>
 
@@ -36,5 +37,7 @@ template <typename T> int countr_zero(T v) {
     }
 #endif
 }
+
+void run_mpi(int err);
 
 #endif

@@ -5,7 +5,8 @@
 #include <iostream>
 #include <sstream>
 
-std::optional<std::string> read_file(const std::string &path, const bool silent) {
+std::optional<std::string> read_file(const std::string &path,
+                                     const bool silent) {
     std::ifstream f(path, std::ios::binary);
     if (!f.is_open()) {
         if (!silent) {
@@ -50,4 +51,21 @@ std::map<std::string, std::string> read_directory(const std::string &path,
     }
 
     return contents;
+}
+
+void run_mpi(const int err) {
+    if (err != MPI_SUCCESS) {
+        char err_string[MPI_MAX_ERROR_STRING];
+        int length;
+
+        MPI_Error_string(err, err_string, &length);
+
+        std::stringstream ss;
+
+        ss << "mpi error: " << err << std::endl;
+
+        const auto s = ss.str();
+
+        throw std::runtime_error(s);
+    }
 }

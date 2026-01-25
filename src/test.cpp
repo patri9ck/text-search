@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
         find = find_hash_v2;
         timer = &hash_v2_timer;
 
-    // OpenMP
+        // OpenMP
     } else if (implementation == "std_openmp") {
         find = find_std_openmp;
         timer = &std_openmp_timer;
@@ -186,8 +186,10 @@ int main(int argc, char **argv) {
     if (mpi) {
         MPI_Init(&argc, &argv);
 
+        MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+
         int rank;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        run_mpi(MPI_Comm_rank(MPI_COMM_WORLD, &rank));
 
         if (rank != 0) {
             find(std::string(), std::vector<std::string>());
