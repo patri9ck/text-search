@@ -18,7 +18,7 @@ def run_single(implementation, executable, args, book_dir, query_file, mpi_proce
     command = []
 
     if mpi_processes > 0:
-        command += ["mpiexec", "-n", str(mpi_processes)]
+        command += ["mpiexec", "--use-hwthread-cpus", "-n", str(mpi_processes)]
 
     command += [
         executable,

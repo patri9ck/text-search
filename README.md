@@ -14,10 +14,13 @@ choose **Ändern**.
 
 To use OpenCL, the OpenCL SDK from Khronos is needed. Binaries can be downloaded from
 the [official repository](https://github.com/KhronosGroup/OpenCL-SDK/releases).
-To make things easier, this repository already bundles binaries for the OpenCL SDK v2025.07.23 in the `OpenCL-SDK-v2025.07.23-Win-x64/`
+To make things easier, this repository already bundles binaries for the OpenCL SDK v2025.07.23 in the
+`OpenCL-SDK-v2025.07.23-Win-x64/`
 directory. Later, when building the project, we can point CMake to this directory.
 
-For MPI, simply install [msmpisdk.msi and msmpisetup.exe](https://learn.microsoft.com/de-de/message-passing-interface/microsoft-mpi) to use Microsoft MPI.
+For MPI, simply
+install [msmpisdk.msi and msmpisetup.exe](https://learn.microsoft.com/de-de/message-passing-interface/microsoft-mpi) to
+use Microsoft MPI.
 
 Then, open **Developer PowerShell for VS** and change the directory to a location where you have sufficient permission,
 e.g.:
@@ -81,6 +84,20 @@ Example call (Linux):
 build/text-search -i openmp -d data -f README.md -q text -q search
 ```
 
+For MPI, simply use the MPI implementation and wrap the command using `mpiexec`.
+
+Example call (Windows):
+
+```
+mpiexec --use-hwthread-cpus -n 8 build/Release/text-search.exe -i mpi -d data -f README.md -q text -q search
+```
+
+Example call (Linux):
+
+```
+mpiexec --use-hwthread-cpus -n 8 build/text-search -i mpi -d data -f README.md -q text -q search
+```
+
 This uses the best OpenMP implementation, loads all files in the directory `data/` and the file `README.md` to look
 through and searches for the words
 `text` and `search`. Use the `--help` option for a list of all options.
@@ -102,6 +119,8 @@ build/text-search-test -i candidate_v3 -d data -f common-words.txt -c
 This will load all books from the directory `data/`, all queries in the file `common-words.txt`, run the `candidate_v3`
 implementation and
 test it against the reference implementation. Run `--help` for an overview of all options.
+
+Again, to use MPI, choose an MPI implementation and wrap the command using `mpiexec`.
 
 ## Creating Plots
 
