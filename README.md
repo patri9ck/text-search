@@ -20,7 +20,7 @@ directory. Later, when building the project, we can point CMake to this director
 
 For MPI, simply
 install [msmpisdk.msi and msmpisetup.exe](https://learn.microsoft.com/de-de/message-passing-interface/microsoft-mpi) to
-use Microsoft MPI.
+use Microsoft MPI. **Both must be installed.**
 
 Then, open **Developer PowerShell for VS** and change the directory to a location where you have sufficient permission,
 e.g.:
@@ -44,6 +44,8 @@ cmake --build build --config Release
 ```
 
 This will create two executables in `build/Release/`, `text-search.exe` and `text-search-test.exe`.
+
+In case everything fails, we provide binaries in the `bin/` directory.
 
 ### Linux
 
