@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
         if (rank != 0) {
-            find_candidate_mpi(std::string(), std::vector<std::string>());
+            find(std::string(), std::vector<std::string>());
 
             return 0;
         }
