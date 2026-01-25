@@ -60,12 +60,8 @@ void run_mpi(const int err) {
 
         MPI_Error_string(err, err_string, &length);
 
-        std::stringstream ss;
+        const std::string msg(err_string, length);
 
-        ss << "mpi error: " << err << std::endl;
-
-        const auto s = ss.str();
-
-        throw std::runtime_error(s);
+        throw std::runtime_error("mpi error: " + msg);
     }
 }
