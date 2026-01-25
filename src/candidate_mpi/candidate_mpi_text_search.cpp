@@ -163,7 +163,7 @@ find_candidate_mpi(const std::string &text,
         } else {
             run_mpi(MPI_Gatherv(local_indices[i].data(), local_count, MPI_UINT64_T,
                         nullptr, nullptr, nullptr, MPI_UINT64_T, 0,
-                        MPI_COMM_WORLD)=;
+                        MPI_COMM_WORLD));
         }
     }
 
