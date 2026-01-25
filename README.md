@@ -86,6 +86,10 @@ Example call (Linux):
 build/text-search -i openmp -d data -f README.md -q text -q search
 ```
 
+This uses the best OpenMP implementation, loads all files in the directory `data/` and the file `README.md` to look
+through and searches for the words
+`text` and `search`. Use the `--help` option for a list of all options.
+
 For MPI, simply use the MPI implementation and wrap the command using `mpiexec`.
 
 Example call (Windows):
@@ -99,10 +103,6 @@ Example call (Linux):
 ```
 mpiexec --use-hwthread-cpus -n 8 build/text-search -i mpi -d data -f README.md -q text -q search
 ```
-
-This uses the best OpenMP implementation, loads all files in the directory `data/` and the file `README.md` to look
-through and searches for the words
-`text` and `search`. Use the `--help` option for a list of all options.
 
 ## Running Tests
 
