@@ -95,13 +95,13 @@ For MPI, simply use the MPI implementation and wrap the command using `mpiexec`.
 Example call (Windows):
 
 ```
-mpiexec --use-hwthread-cpus -n 8 build/Release/text-search.exe -i mpi -d data -f README.md -q text -q search
+mpiexec -n 8 build/Release/text-search.exe -i mpi -d data -f README.md -q text -q search
 ```
 
 Example call (Linux):
 
 ```
-mpiexec --use-hwthread-cpus -n 8 build/text-search -i mpi -d data -f README.md -q text -q search
+mpiexec -n 8 build/text-search -i mpi -d data -f README.md -q text -q search
 ```
 
 ## Running Tests
