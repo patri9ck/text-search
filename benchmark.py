@@ -40,7 +40,7 @@ def run_single(implementation, executable, args, book_dir, query_file, mpi_proce
         check=True
     )
 
-    return float(result.stdout.strip())
+    return int(result.stdout.strip())
 
 
 def benchmark_implementation(implementation, executable, args, book_dir, query_file, amounts, mpi_processes=0):
