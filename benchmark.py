@@ -2,6 +2,7 @@ import argparse
 import os
 import statistics
 import subprocess
+import platform
 
 import matplotlib.pyplot as plt
 
@@ -18,7 +19,10 @@ def run_single(implementation, executable, args, book_dir, query_file, mpi_proce
     command = []
 
     if mpi_processes > 0:
-        command += ["mpiexec", "--use-hwthread-cpus", "-n", str(mpi_processes)]
+        command += ["mpiexec", "-n", str(mpi_processes)]
+
+        if platform.system() == "Linux":
+            command += ["--use-hwthread-cpus"]
 
     command += [
         executable,
@@ -44,7 +48,7 @@ def benchmark_implementation(implementation, executable, args, book_dir, query_f
 
     results = []
 
-    for _ in amounts:
+    for n in amounts:
         times = []
 
         for _ in range(20):
