@@ -13,6 +13,8 @@ OPENCL = ["candidate_opencl_v1", "candidate_opencl_v2", "candidate_opencl_v3"]
 COMBINED = []
 
 OUTPUT_DIR = "doc"
+CSV_DIR = os.path.join(OUTPUT_DIR, "csv")
+PLOT_DIR = os.path.join(OUTPUT_DIR, "plots")
 
 
 def run_single(implementation, executable, args, book_dir, query_file, mpi_processes=0):
@@ -32,6 +34,8 @@ def run_single(implementation, executable, args, book_dir, query_file, mpi_proce
         "--raw",
         *args
     ]
+
+    print(f"Running {' '.join(command)}")
 
     result = subprocess.run(
         command,
@@ -63,7 +67,7 @@ def write_csv(results, amounts, query_file, mode):
     print("Writing csvs...")
 
     for implementation, times in results.items():
-        file_path = os.path.join(OUTPUT_DIR, f"{implementation}_{mode}_{os.path.splitext(query_file)[0]}.csv")
+        file_path = os.path.join(CSV_DIR, f"{implementation}-{mode}-{os.path.splitext(query_file)[0]}.csv")
 
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(implementation + "\n")
@@ -85,7 +89,7 @@ def plot(results, amounts, x_label, query_file, mode, implementation_group):
     plt.grid(True, which="both", linestyle="--", alpha=0.6)
     plt.legend(fontsize=9)
 
-    output_file = os.path.join(OUTPUT_DIR, f"{implementation_group}_{mode}_{os.path.splitext(query_file)[0]}.png")
+    output_file = os.path.join(PLOT_DIR, f"{implementation_group}-{mode}-{os.path.splitext(query_file)[0]}.png")
 
     plt.tight_layout()
     plt.savefig(output_file)
@@ -152,7 +156,8 @@ def main():
 
     args = parser.parse_args()
 
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs(CSV_DIR, exist_ok=True)
+    os.makedirs(PLOT_DIR, exist_ok=True)
 
     implementations = []
 
