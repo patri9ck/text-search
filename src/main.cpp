@@ -147,6 +147,7 @@ int main(int argc, char **argv) {
         const auto &indices = matches[i];
 
         for (auto it = texts.begin(); it != texts.end(); ++it) {
+            std::cout << std::endl;
             std::cout << it->first << ": ";
 
             size_t before = 0;
@@ -156,8 +157,8 @@ int main(int argc, char **argv) {
             }
 
             for (const auto &index : indices) {
-                if (index >= before && index <= before + it->second.length()) {
-                    std::cout << index << " ";
+                if (index >= before && index < before + it->second.length()) {
+                    std::cout << (index - before) << " ";
                 }
             }
 
