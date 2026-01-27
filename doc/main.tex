@@ -2,10 +2,12 @@
 
 \usepackage{listings}
 \usepackage{hyperref}
-\usepackage[a4paper,width=150mm,top=25mm,bottom=25mm,bindingoffset=6mm]{geometry}
+\usepackage[margin=2.5cm]{geometry}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{subcaption}
 
 
 \title{Parallel Text Search}
@@ -17,6 +19,9 @@
     \texttt{max.doebele@htwg-konstanz.de}
 }
 \date{06 February 2026}
+
+\graphicspath{{plots}}
+
 
 \begin{document}
     \maketitle
@@ -34,6 +39,7 @@
     Since most of the 100 most common English words are very short, we additionally use a second query set consisting of randomly selected English words with lengths between 7 and 10 characters.
 
     Both the number of books and the number of queries can be varied to evaluate performance under different conditions.
+
 
     \section{Sequential Implementations}
     We first implemented several purely sequential versions of the algorithm.
@@ -307,41 +313,40 @@ find_candidate_v1(const std::string &text,
         }
     \end{lstlisting}
 
-
     \subsection{Evaluation}
-    Finally, in \autoref{fig:varying_queries_sequential}
+    Finally, in \autoref{fig:queries-sequential} and \autoref{fig:books-sequential}
     \begin{figure}[htb]
         \centering
-        \begin{subfigure}[b]{0.4\textwidth}
+        \begin{subfigure}[b]{0.49\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{sequential_queries_common-words}
-            \subcaption*{Common words}
+            \includegraphics[width=\textwidth]{sequential-queries-common-words}
+            \subcaption{Common words.}
         \end{subfigure}
         \hfill
-        \begin{subfigure}[b]{0.4\textwidth}
+        \begin{subfigure}[b]{0.49\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{sequential_queries_long-words}
-            \subcaption*{Long words}
+            \includegraphics[width=\textwidth]{sequential-queries-long-words}
+            \subcaption{Long words.}
         \end{subfigure}
-        \caption{Runtime for sequential implementations for varying query counts (98 books)}
-        \label{fig:varying-queries-sequential}
+        \caption{Runtime for sequential implementations for varying query counts (98 books).}
+        \label{fig:queries-sequential}
     \end{figure}
 
     \begin{figure}[htb]
         \centering
-        \begin{subfigure}[b]{0.4\textwidth}
+        \begin{subfigure}[b]{0.49\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{sequential_books_common-words}
-            \subcaption*{Common words}
+            \includegraphics[width=\textwidth]{sequential-books-common-words}
+            \subcaption{Common words.}
         \end{subfigure}
         \hfill
-        \begin{subfigure}[b]{0.4\textwidth}
+        \begin{subfigure}[b]{0.49\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{sequential_books_long-words}
-            \subcaption*{Long words}
+            \includegraphics[width=\textwidth]{sequential-books-long-words}
+            \subcaption{Long words.}
         \end{subfigure}
-        \caption{Runtime for sequential implementations for varying book counts (100 queries)}
-        \label{fig:varying-books-sequential}
+        \caption{Runtime for sequential implementations for varying book counts (100 queries).}
+        \label{fig:books-sequential}
     \end{figure}
 
 
