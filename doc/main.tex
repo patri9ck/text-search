@@ -55,7 +55,7 @@ find_std(const std::string &text, const std::vector<std::string> &queries) {
 }
     \end{lstlisting}
 
-    \subsection{Candidate Selection and Validation Approach}
+    \subsection{Candidate Selection and Validation}
     The first implementation is divided into two distinct phases:
     \begin{enumerate}
         \item Identification of candidate positions for potential occurrences based on a simple filtering criterion.
@@ -306,10 +306,21 @@ find_candidate_v1(const std::string &text,
 
     \subsection{Evaluation}
 
-    \section{Parallel Implementation}
-    
-    \subsection{OpenMP}
-    \subsubsection{Parallelize the hash approach}
+
+    \section{Parallelization Across CPU Cores Using OpenMP}
+
+    \subsection{Candidate Selection and Validation}
+    We use the two best bitmask-based approaches, \texttt{candidate\_v3} and \texttt{candidate\_v4}, in the implementations \texttt{candidate\_openmp\_v1} and \texttt{candidate\_openmp\_v2}, respectively.
+    The queries are distributed across all CPU threads for both the selection and validation phases.
+
+    In the approach that creates a bitmask for each query, a separate bitmask is generated for every query, instead of creating a single bitmask once and reusing it for all queries.
+    When using a single large bitmask for all queries, the bitwise OR must be replaced with its atomic counterpart to avoid race conditions.
+    OpenMP provides the directive \texttt{\#pragma omp atomic} for this purpose.
+    This data dependency introduces a disadvantage compared to the per-query bitmask approach.
+
+    For the validation phase, no synchronization is required, since each thread maintains its own vector within the overall result vector.
+
+    \subsection{Rolling Hash}
     To parallelize the hash approach, we assign a group of queries of identical length to each thread.
     Since OpenMP requires a random access iterator or an integer index for the distribution of loops \texttt{\#pragma omp parallel for},
     a \texttt{std::unordered\_map} cannot be used directly for parallelization.
@@ -338,11 +349,17 @@ find_candidate_v1(const std::string &text,
         }
     }
     \end{lstlisting}
-    
-    \subsection{OpenCL}
-    
+
+    \subsection{Reference Implementation}
+    Finally, we also parallelized the reference implementation by distributing the queries across the threads.
+    Using OpenMP, this modification required adding only a single line of code to the already very simple and concise reference implementation.
+
+
+    \section{Using the GPU}
+
     \subsection{OpenMPI}
-    
+
+
     \section{Summary}
 
     \bibliographystyle{plain}
