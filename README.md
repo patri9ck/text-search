@@ -15,7 +15,7 @@ choose **Ändern**.
 To use OpenCL, the OpenCL SDK from Khronos is needed. Binaries can be downloaded from
 the [official repository](https://github.com/KhronosGroup/OpenCL-SDK/releases).
 To make things easier, this repository already bundles binaries for the OpenCL SDK v2025.07.23 in the
-`OpenCL-SDK-v2025.07.23-Win-x64/`
+`bin/OpenCL-SDK-v2025.07.23-Win-x64/`
 directory. Later, when building the project, we can point CMake to this directory.
 
 For MPI, simply
@@ -39,7 +39,7 @@ cd text-search
 Finally, build the project using CMake:
 
 ```
-cmake -S . -B build -DOpenCL_ROOT="$pwd\OpenCL-SDK-v2025.07.23-Win-x64"
+cmake -S . -B build -DOpenCL_ROOT="$pwd\bin\OpenCL-SDK-v2025.07.23-Win-x64"
 cmake --build build --config Release
 ```
 
