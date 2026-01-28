@@ -379,7 +379,7 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     OpenMP provides the directive \texttt{\#pragma omp atomic} for this purpose.
     This data dependency introduces a disadvantage compared to the per-query bitmask approach.
 
-    For the validation phase, no synchronization is required, since each thread maintains its own vector within the overall result vector.
+    For the validation phase, no synchronization is required, since each query maintains its own vector within the overall result vector.
 
     \subsection{Rolling Hash}
     To parallelize the hash approach, we assign a group of queries of identical length to each thread.
