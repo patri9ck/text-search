@@ -22,6 +22,14 @@
 
 \graphicspath{{plots}}
 
+\lstset{
+    backgroundcolor=\color[RGB]{235, 235, 235},
+    keywordstyle=\color[RGB]{0, 0, 255},
+    basicstyle=\ttfamily\small\color{black},
+    numbers=left,
+    captionpos=b,
+}
+
 
 \begin{document}
     \maketitle
@@ -40,6 +48,8 @@
 
     Both the number of books and the number of queries can be varied to evaluate performance under different conditions.
 
+    Performance benchmarks were conducted on a system equipped with an Intel Core i5-14600K CPU (featuring 6 P-cores at 3.5 GHz and 8 E-cores at 2.6 GHz) and an AMD Radeon RX 7800 XT GPU\@.
+
 
     \section{Sequential Implementations}
     We first implemented several purely sequential versions of the algorithm.
@@ -48,7 +58,7 @@
 
     \subsection{Reference Implementation}
     To verify correctness, we use a simple baseline implementation, denoted \texttt{std}, which relies on \texttt{std::string::find()} for substring matching (see \autoref{lst:std}).
-    \begin{lstlisting}[language=C++, caption=\texttt{find\_std()} in \texttt{std\_text\_search.cpp}, captionpos=b, label=lst:std]
+    \begin{lstlisting}[language=C++, caption={\texttt{std} reference implementation (\texttt{std\_text\_search.cpp)}.}, label=lst:std, float]
 std::vector<std::vector<size_t>>
 find_std(const std::string &text, const std::vector<std::string> &queries) {
     std::vector<std::vector<size_t>> indices(queries.size());
@@ -74,7 +84,7 @@ find_std(const std::string &text, const std::vector<std::string> &queries) {
 
     The initial approach, denoted \texttt{candidate\_v1}, performs candidate identification followed by validation separately for each query (see \autoref{lst:candidatev1}).
     The vector is cleared after each query and reused for the next, avoiding unnecessary allocations.
-    \begin{lstlisting}[language=C++, caption={\texttt{find\_candidates()}, \texttt{test\_candidate()} and \texttt{find\_candidate\_v1()} in \texttt{candidate\_v1\_text\_search.cpp}}, captionpos=b, label=lst:candidatev1]
+    \begin{lstlisting}[language=C++, caption={\texttt{candidate\_v1} implementation (\texttt{candidate\_v1\_text\_search.cpp}).}, label=lst:candidatev1, float]
 void find_candidates(const size_t text_length, std::vector<size_t> &results,
                      const std::string &text, const std::string &query) {
     const auto query_length = query.length();
@@ -197,120 +207,128 @@ find_candidate_v1(const std::string &text,
     \]
     Candidate positions are then extracted from the set bits of $B_{w_{\text{total}}}$ using the same approach described previously.
 
-    \subsection{Rolling Hash}
+    \subsection{Rabin-Karp Rolling-Hash}
+    As one of several approaches, we also evaluate a Rabin–Karp–based rolling-hash in the \texttt{hash\_v1} implementation (see \autoref{lst:hashv1}), which is widely used in text search due to its favorable average-case time complexity.
 
-    Assume we are searching for the word \textbf{"hello"} in a large text with millions of characters. Using a naive approach, we would have to check up to all 5 characters for every single position in the text. This results in a time complexity of:
-    \[ O(N \cdot M) \]
-    where:
-    \begin{itemize}
-        \item $N = \text{Length of the text}$
-        \item $M = \text{Length of the searched word (query)}$
-    \end{itemize}
-
-    To avoid comparing every single character for every shift, we convert the search terms into a numerical value and compare them directly.
-    Time complexity of calculating the Hash is:
-    \[ O(M) \]
-    This results in an \textbf{average} time complexity of:
-    \[ O(N + M) \]
-    It is possible that two different strings result in the same hash-value therefore, we have to consider for \textbf{worst-case} that every hit leads to a hash collision. For that case the time complexity is:
-    \[ O(N \cdot M) \]
-
-    Calculation of the query \textbf{hash value}:
-    \[ \text{query\_hash} = q_0 \cdot B^{M-1} + q_1 \cdot B^{M-2} + \dots + q_{M-1} \cdot B^0 \]
-    where $B$ is a prime number (\texttt{PRIME}) acting as the base, and $q_i$ is the numerical value of the character.
-
-    For a window of length M starting at position j in the text, the hash value is:
-
-    \[
-        \text{window\_hash}_j
-        = t_j \cdot B^{M-1}
-        + t_{j+1} \cdot B^{M-2}
-        + \cdots
-        + t_{j+M-1} \cdot B^0.
-    \]
-
-    To ensure we do not have to recalculate the hash value from scratch for every position in the text, we use the \textbf{Rabin-Karp Rolling Hash} algorithm\cite{rabin-karp}:
-
-    The previous window hash is:
-    \[
-        \text{window\_hash}_{j-1}
-        = t_{j-1} \cdot B^{M-1}
-        + t_j \cdot B^{M-2}
-        + \cdots
-        + t_{j+M-2}.
-    \]
-
-    \begin{enumerate}
-        \item \textbf{Subtract} the most significant character:
-        \[
-            \text{window\_hash}_{j-1}'
-            = \text{window\_hash}_{j-1}
-            - t_{j-1} \cdot B^{M-1}.
-        \]
-        \item \textbf{Shift} the window by multiplying with the PRIME:
-        \[
-            \text{window\_hash}_{j-1}''
-            = \text{window\_hash}_{j-1}' \cdot B.
-        \]
-        \item \textbf{Add} the new character:
-        \[
-            \text{window\_hash}_j
-            = \text{window\_hash}_{j-1}'' + t_{j+M-1}.
-        \]
-    \end{enumerate}
-
-    To make sure the actual text is equal to the query, we double-check with \texttt{text.compare()} (see \autoref{lst:verifyComp}.
-    This Problem where two strings return the same hash-value is caused by the $mod\ 2^{64}$ nature of \texttt{uint64\_t} (no negative values).
-
-    \begin{lstlisting}[language=C++, caption={Collision verification using \texttt{compare()}}, captionpos=b, , label=lst:verifyComp]
-    if (window_hash == query_hash) {
-        if (text.compare(j, m, query) == 0) {
-            indices[i].push_back(j);
-        }
+    \begin{lstlisting}[language=C++, caption={\texttt{hash\_v1} implementation (\texttt{hash\_v1\_text\_search.cpp}).}, label=lst:hashv1, float]
+uint64_t compute_power(const size_t length) {
+    uint64_t p = 1;
+    for (size_t i = 1; i < length; ++i) {
+        p *= PRIME;
     }
-    \end{lstlisting}
+    return p;
+}
 
-    \subsubsection{Grouping queries by length for enhanced performance}
-    The first implementation \texttt{hash\_v1\_text\_search.cpp} needs to scan the entire text separately for each query.
-    Given a large text (e.g., approx. 84 MB) that exceeds the CPU's L1 and L2 cache capacities,
-    this leads to a bottleneck as the text must be reloaded from RAM for every single query.
-    To optimize memory bandwidth and improve temporal cache locality, \texttt{hash\_v2} groups all queries by their length (see \autoref{lst:groupQueries}).
-    The Rabin-Karp rolling hash is dependent on a fixed window size, this grouping allows the algorithm to scan the text only once for all queries of the same length.
-    \begin{lstlisting}[language=C++, caption={Grouping queries regarding their length}, captionpos=b, label=lst:groupQueries]
-    std::unordered_map<size_t, std::vector<size_t>> length_groups;
-        for (size_t i = 0; i < queries.size(); ++i) {
-            length_groups[queries[i].length()].push_back(i);
+uint64_t hash_string(const char *s, const size_t length) {
+    uint64_t h = 0;
+    for (size_t i = 0; i < length; ++i) {
+        h = h * PRIME + static_cast<unsigned char>(s[i]);
+    }
+    return h;
+}
+
+std::vector<std::vector<size_t>>
+find_hash_v1(const std::string &text, const std::vector<std::string> &queries) {
+    std::vector<std::vector<size_t>> indices(queries.size());
+    const size_t text_length = text.length();
+    for (size_t i = 0; i < queries.size(); ++i) {
+        const std::string &query = queries[i];
+        const size_t query_length = query.length();
+        if (query_length == 0 || query_length > text_length) {
+            continue;
         }
-    \end{lstlisting}
-    By storing the query hashes in a \texttt{std::unordered\_map}, we can check the current \texttt{window\_hash} against multiple queries due to \texttt{std::unordered\_map.find()} with time complexity on average of $O(1)$\cite{unordered_map-find} (see \autoref{lst:findHash}).
-    \begin{lstlisting}[language=C++, caption={Check for the window-hash in the list of queries with the same length}, captionpos=b, label=lst:findHash]
-
-    for (auto const& [len, q_indices] : length_groups)
-
-        std::unordered_map<uint64_t, std::vector<size_t>> hash_table;
-        for (size_t q_idx : q_indices) {
-            uint64_t h = 0;
-            for (char c : queries[q_idx]) h = h * PRIME + (uint8_t)c;
-            hash_table[h].push_back(q_idx);
-        }
-
-        //... preperation of data
-
-        for (size_t j = 0; j <= text_length - len; ++j) {
-
-                auto it = hash_table.find(window_hash);
-                if (it != hash_table.end()) {
-                    for (size_t q_idx : it->second) {
-                        if (memcmp(&text[j], queries[q_idx].data(), len) == 0) {
-                            indices[q_idx].push_back(j);
-                        }
-                    }
-                }
-
-            //... roling hash implementation
-
+        const uint64_t query_hash = hash_string(query.data(), query_length);
+        const uint64_t power = compute_power(query_length);
+        uint64_t window_hash = hash_string(text.data(), query_length);
+        for (size_t j = 0; j <= text_length - query_length; ++j) {
+            if (window_hash == query_hash &&
+                std::memcmp(text.data() + j, query.data(), query_length) == 0) {
+                indices[i].push_back(j);
+            }
+            if (j < text_length - query_length) {
+                window_hash -= static_cast<unsigned char>(text[j]) * power;
+                window_hash = window_hash * PRIME + static_cast<unsigned char>(
+                                                        text[j + query_length]);
             }
         }
+    }
+    return indices;
+}
+    \end{lstlisting}
+
+    Let the query be a string of length $M$, with characters $q_0, q_1, \dots, q_{M-1}$.
+    Its hash is computed as
+    \[
+        h(q) = \sum_{i=0}^{M-1} q_i \, B^{M-1-i},
+    \]
+    where \(B\) is a prime number used as the base, and \(q_i\) is the numeric value of the \(i\)-th character.
+
+    Similarly, for a substring (window) of length \(M\) in the text starting at position \(j\), with characters \(t_j, t_{j+1}, \dots, t_{j+M-1}\), the hash is
+    \[
+        h_j = \sum_{i=0}^{M-1} t_{j+i} \, B^{M-1-i}.
+    \]
+
+    To avoid recomputing \(h_j\) from scratch for each window, we apply the Rabin-Karp rolling hash formula:
+    \[
+        h_{j+1} = \bigl(h_j - t_j \, B^{M-1}\bigr) \, B + t_{j+M}.
+    \]
+
+    Whenever a window hash matches the query hash, a direct character-by-character comparison is performed to verify the match and eliminate potential hash collisions.
+    This procedure is repeated independently for each query in the input set.
+    All arithmetic is performed using 64-bit unsigned integers, implicitly modulo \(2^{64}\).
+
+    \subsection{Grouping Queries by Length}
+    The first implementation \texttt{hash\_v1} scans the entire text separately for each query.
+    Given a large text that exceeds the CPU's L1 and L2 cache capacities,
+    this approach creates a performance bottleneck, since the text must be reloaded from RAM for every query.
+
+    To improve memory bandwidth utilization and temporal cache locality, \texttt{hash\_v2} groups all queries by their length (see \autoref{lst:hashv2}).
+    For each group of queries of the same length, a \texttt{std::unordered\_map} is used as a hash table, mapping each query hash to the indices of all queries sharing that hash.
+    This allows every text window of the corresponding length to be checked simultaneously against all relevant queries in constant average time.
+    When a hash match occurs, the substring is verified against the original query to eliminate false positives caused by hash collisions.
+    By grouping queries and using a hash table, the text is scanned only once per query length, rather than once per individual query, greatly reducing memory traffic and runtime.
+    The rolling hash itself is computed as in \texttt{hash\_v1}, using a precomputed power of $B$ to efficiently update the hash from one window to the next.
+
+    \begin{lstlisting}[language=C++, caption={\texttt{hash\_v2} implementation (\texttt{hash\_v2\_text\_search.cpp}).}, label=lst:hashv2, float]
+std::vector<std::vector<size_t>>
+find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
+    std::vector<std::vector<size_t>> indices(queries.size());
+    const size_t text_length = text.length();
+    std::unordered_map<size_t, std::vector<size_t>> length_groups;
+    for (size_t i = 0; i < queries.size(); ++i) {
+        length_groups[queries[i].length()].push_back(i);
+    }
+    for (auto const &[query_length, query_indices] : length_groups) {
+        if (query_length == 0 || query_length > text_length) {
+            continue;
+        }
+        std::unordered_map<uint64_t, std::vector<size_t>> hash_table;
+        for (size_t q : query_indices) {
+            uint64_t h = hash_string(queries[q].data(), query_length);
+            hash_table[h].push_back(q);
+        }
+        const uint64_t power = compute_power(query_length);
+        uint64_t window_hash = hash_string(text.data(), query_length);
+        for (size_t j = 0; j <= text_length - query_length; ++j) {
+            auto it = hash_table.find(window_hash);
+            if (it != hash_table.end()) {
+                for (const auto q : it->second) {
+                    if (std::memcmp(text.data() + j, queries[q].data(),
+                                    query_length) == 0) {
+                        indices[q].push_back(j);
+                    }
+                }
+            }
+            if (j < text_length - query_length) {
+                window_hash -= static_cast<unsigned char>(text[j]) * power;
+                window_hash = window_hash * PRIME + static_cast<unsigned char>(
+                                                        text[j + query_length]);
+            }
+        }
+    }
+
+    return indices;
+}
     \end{lstlisting}
 
     \subsection{Evaluation}
