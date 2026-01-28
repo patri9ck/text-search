@@ -124,8 +124,8 @@ find_candidate_v1(const std::string &text,
 }
     \end{lstlisting}
 
-    \subsubsection{Using an Array Instead of \texttt{std::vector}}
-    Since a \texttt{std::vector} may need to repeatedly grow its underlying storage and copy existing elements when its capacity is exceeded, this can introduce a significant performance bottleneck, at least for the first query.
+    \subsubsection{Array Pre-Allocation Instead of Dynamic Vector Growth}
+    Since a \texttt{std::vector} may need to repeatedly grow its underlying storage and copy existing elements when its capacity is exceeded if no default capacity is specified, this can introduce a significant performance bottleneck, at least for the first query.
     To avoid this overhead, the \texttt{candidate\_v2} implementation instead pre-allocates an array with a size equal to the length of the text.
     In the worst case, every position in the text could be a valid candidate, so this allocation is sufficient to store all candidates.
 
