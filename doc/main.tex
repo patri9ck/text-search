@@ -27,6 +27,9 @@
     keywordstyle=\color[RGB]{0, 0, 255},
     basicstyle=\ttfamily\small\color{black},
     numbers=left,
+    frame=single,
+    framerule=0em,
+    framesep=0.5em,
     captionpos=b,
 }
 
@@ -41,7 +44,7 @@
     \section{Introduction}
 
 
-    \section{Testing Data}
+    \section{Benchmarking}
     For testing, we use a collection of up to 98 books from Project Gutenberg, which we concatenate into a single text containing over 82 million characters.
     We perform queries using, at most, the 100 most common English words.
     Since most of the 100 most common English words are very short, we additionally use a second query set consisting of randomly selected English words with lengths between 7 and 10 characters.
@@ -211,6 +214,8 @@ find_candidate_v1(const std::string &text,
     As one of several approaches, we also evaluate a Rabin–Karp–based rolling-hash in the \texttt{hash\_v1} implementation (see \autoref{lst:hashv1}), which is widely used in text search due to its favorable average-case time complexity.
 
     \begin{lstlisting}[language=C++, caption={\texttt{hash\_v1} implementation (\texttt{hash\_v1\_text\_search.cpp}).}, label=lst:hashv1, float]
+#define PRIME 1000003
+
 uint64_t compute_power(const size_t length) {
     uint64_t p = 1;
     for (size_t i = 1; i < length; ++i) {
