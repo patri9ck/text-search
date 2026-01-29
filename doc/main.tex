@@ -8,7 +8,9 @@
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{subcaption}
+\usepackage[backend=biber,style=ieee]{biblatex}
 
+\addbibresource{main.bib}
 
 \title{Parallel Text Search}
 \author{
@@ -337,7 +339,18 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     \end{lstlisting}
 
     \subsection{Evaluation}
-    Finally, in \autoref{fig:queries-sequential} and \autoref{fig:books-sequential}
+    In \autoref{fig:queries-sequential} and \autoref{fig:books-sequential}, we observe that the \texttt{candidate\_v1}, \texttt{candidate\_v2}, and \texttt{hash\_v1} variants consistently exhibit the lowest performance, independent of the number of books queried, the number of queries, or whether common or long words are used.
+
+    An exception occurs for low query counts, up to 35 common-word queries or 20 long-word queries, where \texttt{hash\_v2} performs worse than the other variants, likely due to initialization overhead.
+
+    By contrast, the \texttt{std} variant consistently achieves the best performance across all test cases, which can be attributed to its implementation in GCC\@.
+    In libstdc++, \texttt{std::basic\_string::find()} performs a linear search optimized with low-level memory operations, likely leveraging SIMD instructions.
+    Furthermore, the implementation differentiates between single-character searches and longer query strings, reducing overhead in common cases~\cite{libstdc++}.
+
+    Our implementations, in contrast, do not employ length-dependent optimizations.
+    All query strings are processed using a uniform search strategy, independent of their length.
+    While this approach simplifies the code, incorporating query-length–specific optimizations similar to those in libstdc++ could further improve performance.
+
     \begin{figure}[htb]
         \centering
         \begin{subfigure}[b]{0.49\textwidth}
@@ -428,7 +441,6 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
 
     \section{Summary}
 
-    \bibliographystyle{plain}
-    \bibliography{references}
+    \printbibliography
 
 \end{document}
