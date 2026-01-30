@@ -10,7 +10,7 @@ Timer candidate_v4_timer = Timer(std::string("candidate_v4"));
 #endif
 
 namespace {
-void find_candidates(uint64_t *mask, unsigned long mask_words,
+void find_candidates(uint64_t *mask, const unsigned long mask_words,
                      const std::string &text,
                      const std::vector<std::string> &queries) {
     for (size_t i = 0; i < text.length(); ++i) {

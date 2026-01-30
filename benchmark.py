@@ -10,7 +10,6 @@ SEQUENTIAL = ["std", "candidate_v1", "candidate_v2", "candidate_v3", "candidate_
 OPENMP = ["std_openmp", "candidate_openmp_v1", "candidate_openmp_v2", "hash_openmp"]
 MPI = ["candidate_mpi"]
 OPENCL = ["candidate_opencl_v1", "candidate_opencl_v2", "candidate_opencl_v3"]
-COMBINED = []
 
 OUTPUT_DIR = "doc"
 CSV_DIR = os.path.join(OUTPUT_DIR, "csv")
@@ -104,7 +103,7 @@ def main():
     parser.add_argument(
         "-i", "--implementation",
         required=True,
-        choices=["sequential", "openmp", "mpi", "opencl", "combined", "all"],
+        choices=["sequential", "openmp", "mpi", "opencl"],
         help="Implementation to use"
     )
 
@@ -170,10 +169,6 @@ def main():
             implementations = MPI
         case "opencl":
             implementations = OPENCL
-        case "combined":
-            implementations = COMBINED
-        case _:
-            implementations = SEQUENTIAL + OPENMP + MPI + OPENCL + COMBINED
 
     print(f"Benchmarking {", ".join(implementations)} and saving output to {OUTPUT_DIR}...")
 

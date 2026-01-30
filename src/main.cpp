@@ -15,8 +15,7 @@ int main(int argc, char **argv) {
 
     options.add_options()(
         "i,implementation",
-        "implementation: sequential, openmp, opencl, opencl-safe, mpi, "
-        "combined",
+        "implementation: sequential, openmp, opencl, opencl-safe, mpi",
         cxxopts::value<std::string>()->default_value("openmp"))(
         "f,file", "file to search in",
         cxxopts::value<std::vector<std::string>>())(
@@ -61,8 +60,6 @@ int main(int argc, char **argv) {
     } else if (implementation == "opencl-safe") {
         find = find_candidate_opencl_v2;
         name = "candidate_opencl_v2";
-    } else if (implementation == "combined") {
-
     } else {
         std::cerr << "Unknown implementation." << std::endl;
         return 1;
