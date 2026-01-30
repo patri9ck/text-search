@@ -15,8 +15,8 @@ void find_candidates(uint64_t *mask, const unsigned long mask_words,
                      const std::vector<std::string> &queries) {
     for (size_t i = 0; i < text.length(); ++i) {
         for (size_t j = 0; j < queries.size(); ++j) {
-            auto &query = queries[j];
-            auto query_length = query.size();
+            const auto &query = queries[j];
+            const auto query_length = query.size();
 
             const auto mid = query_length >> 1;
             const auto end = query_length - 1;
@@ -41,7 +41,7 @@ find_candidate_v4(const std::string &text,
                   const std::vector<std::string> &queries) {
     std::vector<std::vector<size_t>> indices(queries.size());
 
-    unsigned long mask_words = (text.length() + 63) / 64;
+    const unsigned long mask_words = (text.length() + 63) / 64;
     auto *mask = new uint64_t[mask_words * queries.size()]();
 
     find_candidates(mask, mask_words, text, queries);
