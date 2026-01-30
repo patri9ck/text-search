@@ -356,10 +356,9 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     However, \texttt{candidate\_v4} performs significantly better for common words.
 
     This is due to different memory access patterns.
-    In \texttt{candidate\_v3}, the text is reloaded from main memory for every query, causing cache thrashing; the large text data constantly evicts the bitmask and other cache-resident data.
+    In \texttt{candidate\_v3}, the text is reloaded from main memory for every query, causing cache thrashing; the large text data constantly evicts the bitmask, which must be updated much more frequently for common words.
     In the \texttt{candidate\_v4} approach, the text is scanned only once.
-    This allows both the queries and the bitmask to stay -- at least partly -- within the cache.
-    For common words, the efficiency of this single-pass scan outweighs the overhead of the larger bitmask, leading to the observed performance gain.
+    This allows the bitmask to stay -- at least partly -- within the cache.
 
     \begin{figure}[htb]
         \centering
