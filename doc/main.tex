@@ -186,7 +186,8 @@ find_candidate_v1(const std::string &text,
     This approach ensures that candidate extraction runs in time proportional to the number of valid candidates rather than the size of the bitmask.
 
     \subsubsection{Using a Bitmask for All Queries Together}
-    Instead of allocating a separate bitmask for each query and clearing it after processing, the \texttt{candidate\_v4} implementation uses single bitmask large enough to store candidate positions for \emph{all queries} simultaneously.
+    Instead of allocating a separate bitmask for each query and clearing it after processing, the \texttt{candidate\_v4} implementation uses single bitmask large enough to store candidate positions for all queries simultaneously.
+    By restructuring the search to iterate primarily over the text followed by the queries, the implementation achieves a more cache-friendly access pattern while populating this unified bitmask.
 
     For $n$ queries, the total bitmask size becomes
     \[
@@ -213,7 +214,7 @@ find_candidate_v1(const std::string &text,
     Candidate positions are then extracted from the set bits of $B_{w_{\text{total}}}$ using the same approach described previously.
 
     \subsection{Rabin-Karp Rolling-Hash}
-    As one of several approaches, we also evaluate a Rabin–Karp–based rolling-hash in the \texttt{hash\_v1} implementation (see \autoref{lst:hashv1}), which is widely used in text search due to its favorable average-case time complexity.
+    As one of several approaches, we also evaluate a Rabin–Karp–based rolling-hash in the \texttt{hash\_v1} implementation (see \autoref{lst:hashv1}), which is widely used in text search due to its favorable average-case time complexity~\cite{rabin-karp}.
 
     \begin{lstlisting}[language=C++, caption={\texttt{hash\_v1} implementation (\texttt{hash\_v1\_text\_search.cpp}).}, label=lst:hashv1, float]
 #define PRIME 1000003
@@ -350,6 +351,15 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     Our implementations, in contrast, do not employ length-dependent optimizations.
     All query strings are processed using a uniform search strategy, independent of their length.
     While this approach simplifies the code, incorporating query-length–specific optimizations similar to those in libstdc++ could further improve performance.
+
+    The bitmask-based approaches, \texttt{candidate\_v3} and \texttt{candidate\_v4}, show similar performance for long, less-common words.
+    However, \texttt{candidate\_v4} performs significantly better for common words.
+
+    This is due to different memory access patterns.
+    In \texttt{candidate\_v3}, the text is reloaded from main memory for every query, causing cache thrashing; the large text data constantly evicts the bitmask and other cache-resident data.
+    In the \texttt{candidate\_v4} approach, the text is scanned only once.
+    This allows both the queries and the bitmask to stay -- at least partly -- within the cache.
+    For common words, the efficiency of this single-pass scan outweighs the overhead of the larger bitmask, leading to the observed performance gain.
 
     \begin{figure}[htb]
         \centering
