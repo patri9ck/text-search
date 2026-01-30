@@ -345,7 +345,7 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     An exception occurs for low query counts, up to 35 common-word queries or 20 long-word queries, where \texttt{hash\_v2} performs worse than the other variants, likely due to initialization overhead.
 
     By contrast, the \texttt{std} variant consistently achieves the best performance across all test cases, which can be attributed to its implementation.
-    In libstdc++ for example, \texttt{std::basic\_string::find()} performs a search optimized with low-level memory operations, likely leveraging SIMD instructions for most architectures.
+    In libstdc++, for example, \texttt{std::basic\_string::find()} performs a search optimized with low-level memory operations, likely leveraging SIMD instructions for most architectures.
     Furthermore, the implementation differentiates between single-character searches and longer query strings, reducing overhead in common cases~\cite{libstdc++}.
 
     Our implementations, in contrast, do not employ length-dependent optimizations.
