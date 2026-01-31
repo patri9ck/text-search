@@ -212,7 +212,7 @@ find_candidate_v1(const std::string &text,
     \]
     Candidate positions are then extracted from the set bits of $B_{w_{\text{total}}}$ using the same approach described previously.
 
-    \subsection{Rabin-Karp Rolling-Hash}
+    \subsection{Rolling-Hash}
     As one of several approaches, we also evaluate a Rabin–Karp–based rolling-hash in the \texttt{hash\_v1} implementation (see \autoref{lst:hashv1}), which is widely used in text search due to its favorable average-case time complexity~\cite{rabin-karp}.
 
     \begin{lstlisting}[language=C++, caption={\texttt{hash\_v1} implementation (\texttt{hash\_v1\_text\_search.cpp}).}, label=lst:hashv1, float]
@@ -417,41 +417,27 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
 
     For the validation phase, no synchronization is required, since each query maintains its own vector within the overall result vector.
 
-    \subsection{Rolling Hash}
-    To parallelize the hash approach, we assign a group of queries of identical length to each thread.
-    Since OpenMP requires a random access iterator or an integer index for the distribution of loops \texttt{\#pragma omp parallel for},
-    a \texttt{std::unordered\_map} cannot be used directly for parallelization.
-    In the \texttt{hash\_openmp\_v1} implementation, we use a vector in which the query indexes are sorted by length.
-    In addition, a second vector with a special block structure (LengthBlock) is created.
-    This structure stores the respective word length, the start index within the sorted vector, and the number of words in this length group as metadata.
-    This creates independent work packages that can be distributed efficiently by OpenMP to the available processor cores without any synchronization effort.
+    \subsection{Rolling-Hash}
+    The \texttt{hash\_openmp} implementation parallelizes \texttt{hash\_v2} by distributing independent query length groups across CPU threads.
+    Parallelization is performed at the granularity of query groups sharing the same length, as only those can be processed together using a single rolling hash window.
 
-    \begin{lstlisting}[language=C++, caption={New Data Struct}, captionpos=b, label=lst:blockDataStruct]
-    std::vector<size_t> q_indices(num_queries);
-    std::iota(q_indices.begin(), q_indices.end(), 0);
+    Since OpenMP requires an integer index or a random access iterator for the \texttt{parallel for} directive, the \texttt{std::unordered\_map} used in the sequential version cannot be parallelized directly.
+    Therefore, in a sequential preprocessing step, all query indices are stored in a vector and sorted by ascending query length.
+    Based on this ordering, a second vector of metadata blocks is constructed, each storing a query length, the start position within the sorted index vector, and the number of queries in the group.
 
-    std::sort(q_indices.begin(), q_indices.end(), [&](size_t a, size_t b) {
-        return queries[a].length() < queries[b].length();
-    });
+    These blocks constitute independent work units and are processed in parallel using the OpenMP \texttt{parallel for} directive with dynamic scheduling.
+    Dynamic scheduling improves load balancing, as the computational cost varies with query length and the number of candidate matches in the text.
 
-    std::vector<LengthBlock> blocks;
-    for (size_t i = 0; i < num_queries; ) {
-        size_t len = queries[q_indices[i]].length();
-        size_t start = i;
-        while (i < num_queries && queries[q_indices[i]].length() == len) {
-            i++;
-        }
-        if (len > 0 && len <= text_length) {
-            blocks.push_back({len, start, i - start});
-        }
-    }
-    \end{lstlisting}
+    All auxiliary data structures required during the search phase, including the hash table mapping hash values to query indices, are allocated locally within the parallel region.
+    As each query writes exclusively to its own result vector, the parallel execution requires no synchronization and is free of data races.
 
     \subsection{Reference Implementation}
     Finally, we also parallelized the reference implementation by distributing the queries across the threads.
     In the \texttt{std\_openmp} implementation, using OpenMP, this modification required adding only a single line of code to the already very simple and concise reference implementation.
 
     \subsection{Evaluation}
+    As we can see in \autoref{fig:queries-openmp}.
+    In \autoref{fig:books-openmp}, we can also see that.
 
     \begin{figure}[htb]
         \centering
@@ -466,7 +452,7 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
             \includegraphics[width=\textwidth]{openmp-queries-long-words}
             \subcaption{Long words.}
         \end{subfigure}
-        \caption{Runtime for OpenMP implementations for varying query counts (98 books).}
+        \caption{Runtime for OpenMP implementations for varying query counts (98 books, 20 threads).}
         \label{fig:queries-openmp}
     \end{figure}
 
@@ -483,7 +469,7 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
             \includegraphics[width=\textwidth]{openmp-books-long-words}
             \subcaption{Long words.}
         \end{subfigure}
-        \caption{Runtime for OpenMP implementations for varying book counts (100 queries).}
+        \caption{Runtime for OpenMP implementations for varying book counts (100 queries, 20 threads).}
         \label{fig:books-openmp}
     \end{figure}
 
