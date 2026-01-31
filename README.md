@@ -173,6 +173,12 @@ The repository already includes the top 100 from December 2025.
 - `candidate_v4`:
   This creates a huge bit mask for all queries together instead of creating one per query.
 
+- `hash_v1`:
+  Rabin-Karp rolling-hash implementation.
+
+- `hash_v2`:
+  Groups queries by length instead and uses an unordered map as a hash table.
+
 - `std_openmp`
   Parallelization of `std` using OpenMP.
 

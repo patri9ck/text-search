@@ -35,7 +35,6 @@
     captionpos=b,
 }
 
-
 \begin{document}
     \maketitle
 
@@ -360,6 +359,13 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     In the \texttt{candidate\_v4} approach, the text is scanned only once.
     This allows the bitmask to stay -- at least partly -- within the cache.
 
+    Finally, we observe that the \texttt{hash\_v2} variant performs comparably to the bitmask-based candidate approaches when processing the common query set.
+    However, for the long word queries, its efficiency becomes even more pronounced, trailing the \texttt{std} implementation by only a few hundred milliseconds.
+
+    This performance is due to the fact that updating and comparing the rolling hash window is a constant time operation that does not depend on the query length.
+    Consequently, the more expensive byte-by-byte string verification and result vector access are only triggered in the event of a hash match.
+    Since the long query set statistically results in significantly fewer matches, the overhead of these operations is largely avoided, allowing the algorithm to maintain high throughput.
+
     \begin{figure}[htb]
         \centering
         \begin{subfigure}[b]{0.49\textwidth}
@@ -396,6 +402,9 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
 
 
     \section{Parallelization Across CPU Cores Using OpenMP}
+    Having evaluated several sequential implementations, we now transition to parallelizing the most effective variants using OpenMP\@.
+    This includes the candidate selection and validation approaches, as well as the reference implementation.
+    Additionally, we adapt the best-performing hash-based variant for parallel execution, which requires addressing its inherent data dependencies.
 
     \subsection{Candidate Selection and Validation}
     We use the two best bitmask-based approaches, \texttt{candidate\_v3} and \texttt{candidate\_v4}, in the implementations \texttt{candidate\_openmp\_v1} and \texttt{candidate\_openmp\_v2}, respectively.
@@ -442,10 +451,47 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     Finally, we also parallelized the reference implementation by distributing the queries across the threads.
     In the \texttt{std\_openmp} implementation, using OpenMP, this modification required adding only a single line of code to the already very simple and concise reference implementation.
 
+    \subsection{Evaluation}
+
+    \begin{figure}[htb]
+        \centering
+        \begin{subfigure}[b]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{openmp-queries-common-words}
+            \subcaption{Common words.}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{openmp-queries-long-words}
+            \subcaption{Long words.}
+        \end{subfigure}
+        \caption{Runtime for OpenMP implementations for varying query counts (98 books).}
+        \label{fig:queries-openmp}
+    \end{figure}
+
+    \begin{figure}[htb]
+        \centering
+        \begin{subfigure}[b]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{openmp-books-common-words}
+            \subcaption{Common words.}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{openmp-books-long-words}
+            \subcaption{Long words.}
+        \end{subfigure}
+        \caption{Runtime for OpenMP implementations for varying book counts (100 queries).}
+        \label{fig:books-openmp}
+    \end{figure}
+
 
     \section{Using the GPU}
 
-    \subsection{OpenMPI}
+
+    \section{Processes Instead of Threads: MPI}
 
 
     \section{Summary}
