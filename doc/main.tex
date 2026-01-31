@@ -28,7 +28,6 @@
     backgroundcolor=\color[RGB]{235, 235, 235},
     keywordstyle=\color[RGB]{0, 0, 255},
     basicstyle=\ttfamily\small\color{black},
-    numbers=left,
     frame=single,
     framerule=0em,
     framesep=0.5em,
@@ -39,10 +38,34 @@
     \maketitle
 
     \begin{abstract}
+        This paper presents and evaluates several text search algorithms for processing a single large text with multiple query patterns, focusing on their parallelization across different hardware architectures.
+        We demonstrate CPU-based parallelization using OpenMP, achieving execution times below 200 milliseconds and a speed-up of 10\% for a text of 82 million characters with the 100 most common English words as queries.
+
+        We further explore GPU-based parallelization using OpenCL, which reduces execution time to approximately 500 milliseconds, corresponding to a speed-up of 40\%.
+        By applying heuristics to estimate the total number of matches, we further reduce runtime to around 300 milliseconds, yielding a speed-up of up to 60\% compared to the sequential baseline.
+
+        In addition, we show how one algorithm can be parallelized across multiple processes using MPI to be distributed over different hosts, achieving an execution time of roughly 400 milliseconds and a speed-up of 30\%.
+        We also analyze the performance of all approaches when using 100 longer and less common query words.
+
+        The source code is available at \url{https://github.com/KN-PACO/text-search/} in the \texttt{src/} directory.
+        Build and usage instructions can be found in \texttt{README.md}.
     \end{abstract}
 
 
     \section{Introduction}
+    The goal of this work is to search a single large text for multiple query strings and to return all positions at which each query occurs.
+    This results in the following function signature for a single application of a text search implementation:
+
+    \begin{lstlisting}[language=C++]
+std::vector<std::vector<size_t>>
+find(const std::string &text, const std::vector<std::string> &queries)
+    \end{lstlisting}
+
+    The function returns a vector of the same size as the input vector of queries.
+    For each query at position $n$ in the input vector, the result vector contains a corresponding vector at position $n$ with all starting indices where that query occurs in the text.
+
+    Every implementation presented in this paper is completely self-contained and does not depend on any other implementation.
+    This allows us to provide a command-line tool where the user can select the desired implementation—such as sequential, OpenMP, OpenCL, or MPI -- depending on the wanted hardware target.
 
 
     \section{Benchmarking}
@@ -474,13 +497,13 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     \end{figure}
 
 
-    \section{Using the GPU}
+    \section{Parallelization Across the GPU Using OpenCL}
 
 
-    \section{Processes Instead of Threads: MPI}
+    \section{Parallelization Across Processes Using MPI}
 
 
-    \section{Summary}
+    \section{Conclusion}
 
     \printbibliography
 
