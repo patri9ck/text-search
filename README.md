@@ -128,7 +128,7 @@ Again, to use MPI, choose an MPI implementation and wrap the command using `mpie
 
 ## Creating Plots
 
-To create plots and CSV files, `benchmark.py` exists which calls `text-search-test`. It stores its results in `doc/`.
+To create plots and CSV files, `benchmark.py` exists which calls the test binary. It stores its results in `doc/`.
 
 Example call (Windows):
 
