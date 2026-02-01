@@ -39,12 +39,13 @@
 
     \begin{abstract}
         This paper presents and evaluates several text search algorithms for processing a single large text with multiple query patterns, focusing on their parallelization across different hardware architectures.
-        We demonstrate CPU-based parallelization using OpenMP, achieving execution times below 200 milliseconds and a speed-up of 10\% for a text of 82 million characters with the 100 most common English words as queries.
+        We demonstrate CPU-based parallelization using OpenMP, achieving a median execution time of 204 milliseconds and a speed-up of 1020\% for a text of 82 million characters with the 100 most common English words as queries.
 
-        We further explore GPU-based parallelization using OpenCL, which reduces execution time to approximately 500 milliseconds, corresponding to a speed-up of 40\%.
-        By applying heuristics to estimate the total number of matches, we further reduce runtime to around 300 milliseconds, yielding a speed-up of up to 60\% compared to the sequential baseline.
+        We further explore GPU-based parallelization using OpenCL, which reduces median execution time to 519 milliseconds, corresponding to a speed-up of 717\%.
+        By applying heuristics to estimate the total number of matches, we further reduce median runtime to around 319 milliseconds, yielding a speed-up of 1228\% compared to the sequential baseline.
 
-        In addition, we show how one algorithm can be parallelized across multiple processes using MPI to be distributed over different hosts, achieving an execution time of roughly 400 milliseconds and a speed-up of 30\%.
+
+        In addition, we show how one algorithm can be parallelized across multiple processes using MPI to be distributed over different hosts, achieving a median execution time of 422 milliseconds and a speed-up of 1050\%.
         We also analyze the performance of all approaches when using 100 longer and less common query words.
 
         The source code is available at \url{https://github.com/KN-PACO/text-search/} in the \texttt{src/} directory.

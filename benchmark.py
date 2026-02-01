@@ -145,7 +145,8 @@ def compare(query_files):
                     all_speedups[parallel_implementation].extend(speedups)
 
         for parallel_implementation, speedup_list in all_speedups.items():
-            print(f"{sequential_implementation} -> {parallel_implementation}: {statistics.mean(speedup_list)}")
+            print(
+                f"{sequential_implementation} -> {parallel_implementation}: {(statistics.mean(speedup_list) - 1) * 100}%")
 
 
 def main():
