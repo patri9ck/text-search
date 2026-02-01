@@ -1,3 +1,8 @@
+# Parallel Text Search
+
+This project presents several text search algorithms for processing a single large text with multiple query patterns and
+how they can be parallelized across different hardware architectures. See `doc/main.pdf` for the paper.
+
 ## Build Instructions for Windows
 
 Install Visual Studio with (at least) the following components:
@@ -128,18 +133,24 @@ To create plots and CSV files, `benchmark.py` exists which calls `text-search-te
 Example call (Windows):
 
 ```
-python3 benchmark.py -i openmp -e build/Release/text-search-test.exe -m queries -q common-words.txt -b data
+python3 benchmark.py benchmark -i openmp -e build/Release/text-search-test.exe -m queries -q common-words.txt -b data
 ```
 
 Example call (Linux):
 
 ```
-python3 benchmark.py -i openmp -e build/text-search-test -m queries -q common-words.txt -b data
+python3 benchmark.py benchmark -i openmp -e build/text-search-test -m queries -q common-words.txt -b data
 ```
 
 Use the `--help` options for an overview of all options.
 
 Existing plots and CSV files can already be found in the `doc/` directory.
+
+To show speed-up factors, based on previous created CSV files, run:
+
+```
+python3 benchmark.py compare -q common-words.txt -q long-words.txt
+```
 
 ## Downloading Ebooks from Project Gutenberg
 
@@ -187,6 +198,7 @@ The repository already includes the top 100 from December 2025.
   Parallelization of `candidate_v4` using OpenMP.
 
 - `hash_openmp`
+  Parallelization of `hash_v2` by distributing independent query length groups across CPU threads.
 
 - `candidate_mpi`
 
