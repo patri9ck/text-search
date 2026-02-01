@@ -461,8 +461,20 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     In the \texttt{std\_openmp} implementation, using OpenMP, this modification required adding only a single line of code to the already very simple and concise reference implementation.
 
     \subsection{Evaluation}
-    As we can see in \autoref{fig:queries-openmp}.
-    In \autoref{fig:books-openmp}, we can also see that.
+    AAs illustrated in \autoref{fig:queries-openmp} and \autoref{fig:books-openmp}, the \texttt{candidate\_openmp\_v1} implementation outperforms \texttt{candidate\_openmp\_v2}.
+    This performance gap is primarily due to the overhead of atomic operations required by the latter, which \texttt{candidate\_openmp\_v1} avoids.
+    Despite this difference, both variants show significant scalability, achieving average speedups of 965\% and 534\% over their respective sequential counterparts.
+
+    The \texttt{hash\_openmp} implementation shows the lowest performance among the parallel versions, achieving an average speedup of only 244\% compared to the \texttt{hash\_v2} variant.
+    This is primarily due to inefficient load balancing: since the workload is partitioned by distinct query lengths, many threads remain idle if the queries are of uniform length.
+
+    In contrast, the candidate-based approaches parallelize across all queries, ensuring much higher thread utilization.
+    Furthermore, the hash-based approach incurs a high computational overhead per text window, requiring rolling hash arithmetic and expensive hash map lookups.
+    The candidate selection phase, however, relies on simple integer comparisons that are significantly more efficient to execute on modern CPUs.
+
+    The parallelized reference implementation, \texttt{std\_openmp}, delivers the highest overall performance.
+    This result highlights a key takeaway: by leveraging the C++ Standard Library in conjunction with OpenMP, it is possible to develop a highly efficient text search with minimal implementation effort.
+    The fact that a few lines of code can outperform more complex custom approaches underscores the maturity of modern library algorithms and their suitability for parallel execution.
 
     \begin{figure}[htb]
         \centering

@@ -87,9 +87,9 @@ find_hash_openmp(const std::string &text,
         std::unordered_map<uint64_t, std::vector<size_t>> hash_to_queries;
 
         for (size_t i = 0; i < count; ++i) {
-            const size_t q_idx = query_indices[start + i];
-            const uint64_t h = hash_string(queries[q_idx].data(), length);
-            hash_to_queries[h].push_back(q_idx);
+            const size_t query_index = query_indices[start + i];
+            const uint64_t h = hash_string(queries[query_index].data(), length);
+            hash_to_queries[h].push_back(query_index);
         }
 
         const uint64_t power = compute_power(length);
