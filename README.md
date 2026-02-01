@@ -27,7 +27,7 @@ e.g.:
 cd ~
 ```
 
-Next, clone the repository and all submodules.
+Next, clone the repository and all submodules:
 
 ```
 git clone --recursive https://github.com/KN-PACO/text-search.git
