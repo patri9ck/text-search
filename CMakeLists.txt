@@ -51,19 +51,25 @@ add_executable(text-search-test
         src/candidate_opencl_v2/candidate_opencl_v2_text_search.cpp
         src/candidate_opencl_v3/candidate_opencl_v3_text_search.cpp)
 
+add_subdirectory(third_party/cxxopts)
+
 find_package(OpenCL REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(MPI REQUIRED)
 
-target_include_directories(text-search PRIVATE ${PROJECT_SOURCE_DIR}/include)
-target_include_directories(text-search-test PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(text-search PRIVATE
+        cxxopts::cxxopts
+        OpenCL::OpenCL
+        OpenMP::OpenMP_CXX
+        MPI::MPI_CXX
+)
 
-target_link_libraries(text-search OpenCL::OpenCL)
-target_link_libraries(text-search OpenMP::OpenMP_CXX)
-target_link_libraries(text-search MPI::MPI_CXX)
-target_link_libraries(text-search-test OpenCL::OpenCL)
-target_link_libraries(text-search-test OpenMP::OpenMP_CXX)
-target_link_libraries(text-search-test MPI::MPI_CXX)
+target_link_libraries(text-search-test PRIVATE
+        cxxopts::cxxopts
+        OpenCL::OpenCL
+        OpenMP::OpenMP_CXX
+        MPI::MPI_CXX
+)
 
 target_compile_definitions(text-search-test PRIVATE BENCHMARK)
 

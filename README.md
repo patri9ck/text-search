@@ -1,16 +1,14 @@
-## Build Instructions
-
-### Windows
+## Build Instructions for Windows
 
 Install Visual Studio with (at least) the following components:
 
-- MSVC-Buildtools für x64/x86 (neueste Version)
-- C++-CMake-Tools für Windows
-- Git für Windows
+- MSVC Build Tools for x64/x86 (Latest)
+- C++ CMake tools for Windows
+- Git for Windows
 - Windows 11 SDK (10.0.22621.0)
 
 In case you have Visual Studio already installed and a component is missing, open the **Visual Studio Installer** and
-choose **Ändern**.
+choose **Modify**.
 
 To use OpenCL, the OpenCL SDK from Khronos is needed. Binaries can be downloaded from
 the [official repository](https://github.com/KhronosGroup/OpenCL-SDK/releases).
@@ -29,10 +27,10 @@ e.g.:
 cd ~
 ```
 
-Next, clone the repository.
+Next, clone the repository and all submodules.
 
 ```
-git clone https://github.com/KN-PACO/text-search.git
+git clone --recursive https://github.com/KN-PACO/text-search.git
 cd text-search
 ```
 
@@ -47,15 +45,15 @@ This will create two executables in `build/Release/`, `text-search.exe` and `tex
 
 In case everything fails, we provide binaries in the `bin/` directory.
 
-### Linux
+## Build Instructions for Linux
 
 This requires CMake for building, an MPI implementation (e.g. Open MPI) and, for OpenCL, an ICD loader (e.g. ocl-icd) as
 well as a runtime (e.g. AMD CLR for AMD).
 
-Get started by cloning the repository:
+Get started by cloning the repository and all submodules:
 
 ```
-git clone https://github.com/KN-PACO/text-search.git
+git clone --recursive https://github.com/KN-PACO/text-search.git
 cd text-search
 ```
 
