@@ -472,7 +472,7 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     Furthermore, the hash-based approach incurs a high computational overhead per text window, requiring rolling hash arithmetic and expensive hash map lookups.
     The candidate selection phase, however, relies on simple integer comparisons that are significantly more efficient to execute on modern CPUs.
 
-    The parallelized reference implementation, \texttt{std\_openmp}, delivers the highest overall performance.
+    The parallelized reference implementation, \texttt{std\_openmp}, delivers the highest overall performance, achieving an average speedup of 855\% compared to its sequential counterpart.
     This result highlights a key takeaway: by leveraging the C++ Standard Library in conjunction with OpenMP, it is possible to develop a highly efficient text search with minimal implementation effort.
     The fact that a few lines of code can outperform more complex custom approaches underscores the maturity of modern library algorithms and their suitability for parallel execution.
 
