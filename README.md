@@ -15,7 +15,7 @@ Install Visual Studio with (at least) the following components:
 In case you have Visual Studio already installed and a component is missing, open the **Visual Studio Installer** and
 choose **Modify**.
 
-To use OpenCL, the OpenCL SDK from Khronos is needed. Binaries can be downloaded from
+To use OpenCL, the OpenCL SDK from Khronos is needed. It can be downloaded from
 the [official repository](https://github.com/KhronosGroup/OpenCL-SDK/releases).
 To make things easier, this repository already bundles binaries for the OpenCL SDK v2025.07.23 in the
 `bin/OpenCL-SDK-v2025.07.23-Win-x64/`
