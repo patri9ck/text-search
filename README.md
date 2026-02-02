@@ -140,6 +140,6 @@ The repository already includes the top 100 from December 2025.
 - `candidate_opencl_v3`
   Consists of only one phase. The needed result buffer size is estimated before on the CPU using a heuristic.
 
-# License
+## License
 
 This project is licensed under [MIT](LICENSE).
