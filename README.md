@@ -11,7 +11,7 @@ well as a runtime (e.g. AMD CLR for AMD).
 Get started by cloning the repository and all submodules:
 
 ```
-git clone --recursive https://github.com/KN-PACO/text-search.git
+git clone --recursive https://github.com/patri9ck/text-search.git
 cd text-search
 ```
 
