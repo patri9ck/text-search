@@ -717,6 +717,40 @@ __kernel void count_and_test_candidates(
 
 
     \section{Parallelization Across Processes Using MPI}
+    To integrate MPI into the existing architecture, the program follows these steps:
+
+    \begin{enumerate}
+        \item Every process parses the command-line arguments.
+        This ensures that all processes are aware of the user's choice to use the MPI implementation.
+        \item Each process checks its rank.
+        Non-master processes invoke the \texttt{find()} function with empty text and query vectors and wait for the master process to distribute the data.
+        \item The master process reads the input files or directories and assembles the text to be searched, as well as the queries provided by the user.
+        It then calls \texttt{find()} with the assembled text and query list.
+        \item Within the \texttt{find()} function, the master process sends the text and queries to the worker processes.
+        The partitioning of data among processes depends on the specific implementation.
+    \end{enumerate}
+
+    This approach allows the same \texttt{find()} interface to be used for sequential, OpenMP, OpenCL, and MPI implementations while maintaining a consistent program structure.
+    Worker processes start with empty input and wait until the master distributes the data, ensuring that synchronization and data distribution are handled explicitly within the function.
+
+    \subsection{Implementation}
+    In the \texttt{candidate\_mpi} implementation, based on the \texttt{candidate\_v3} approach, the input text is divided among all available processes, with each process receiving a contiguous segment.
+
+    Let $m$ denote the length of the longest query.
+    To ensure that matches spanning process boundaries are not missed, an overlap region of length $m-1$ is appended to all segments except the last one.
+
+    The text is partitioned as follows:
+    \begin{itemize}
+        \item The text is split into equally sized base segments, one per process.
+        \item For all processes except the last, the assigned segment is extended by an overlap of $m-1$ characters.
+        \item The last process receives the remaining characters and does not require an additional overlap.
+    \end{itemize}
+
+    The master process computes the segment sizes and displacements and distributes the text using \texttt{MPI\_Scatterv()}.
+    Each worker process searches within its extended segment, but only validates matches whose starting position lies within the original, non-overlapping base segment.
+    After local processing, the results are collected on the master process using \texttt{MPI\_Gather()} and \texttt{MPI\_Gatherv()}~\cite{mpi}.
+
+    \subsection{Evaluation}
 
 
     \section{Conclusion}
