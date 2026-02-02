@@ -198,12 +198,16 @@ The repository already includes the top 100 from December 2025.
   Parallelization of `candidate_v4` using OpenMP.
 
 - `hash_openmp`
-  Parallelization of `hash_v2` by distributing independent query length groups across CPU threads.
+  Parallelization of `hash_v2` using OpenMP by distributing independent query length groups across CPU threads.
 
 - `candidate_mpi`
 
 - `candidate_opencl_v1`
+  Parallelization of `candidate_v4` using OpenCL which validates directly instead of selecting candidates first.
 
 - `candidate_opencl_v2`
+  Two-phase strategy: Counts candidates to allocate a result buffer. Then validates all text positions and queries,
+  adding matches to the buffer.
 
 - `candidate_opencl_v3`
+  Consists of only one phase. The needed result buffer size is estimated before on the CPU using a heuristic.

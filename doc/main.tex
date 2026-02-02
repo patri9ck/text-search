@@ -576,7 +576,8 @@ __kernel void test_candidates(
             }
         }
         if (match) {
-            atomic_or(&mask[(j * group_amount * 8) + (l * 8) + (k >> 5)], (uint)1 << (k & 31));
+            atomic_or(&mask[(j * group_amount * 8) + (l * 8) + (k >> 5)],
+                                                     (uint)1 << (k & 31));
         }
     }
 }
