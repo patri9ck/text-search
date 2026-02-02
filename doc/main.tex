@@ -69,10 +69,10 @@ find(const std::string &text, const std::vector<std::string> &queries)
 
 
     \section{Benchmarking}
-    For testing, we use a collection of up to 98 books from Project Gutenberg~\cite{gutenberg}, which we concatenate into a single text containing over 82 million characters.
+    For testing, we use a collection of up to 98 books from Project Gutenberg\footnotemark~\cite{gutenberg}, which we concatenate into a single text containing over 82 million characters.
+    \footnotetext{See \url{https://github.com/KN-PACO/text-search/tree/main/data} for all used books.}
     We perform queries using, at most, the 100 most common English words~\cite{common-words}.
     Since most of the 100 most common English words are very short, we additionally use a second query set consisting of randomly selected longer English words with lengths between 7 and 10 characters\footnotemark.
-
     \footnotetext{See \url{https://github.com/KN-PACO/text-search/blob/main/long-words.txt} for the list of long words.}
 
     Both the number of books and the number of queries can be varied to evaluate performance under different conditions.
