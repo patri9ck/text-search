@@ -594,9 +594,9 @@ __kernel void test_candidates(
     Both phases are implemented within a single kernel.
     A mode variable is used to distinguish between counting and validation operations (see \autoref{lst:candidateopenclv2}).
 
-    Counting is performed per work group to minimize synchronization and reduce the need for atomic operations.
+    Counting is performed per work group to achieve finer granularity, reducing contention on atomic operations and improving overall performance.
 
-    After counting, a single result buffer is allocated with partitions for each work group according to the counts computed in the first phase, and the counts buffer is reset on the GPU.
+    After counting, a single result buffer is allocated with partitions for each work group according to the counts computed in the first phase, and the counts buffer is reset on the GPU\@.
 
     During validation, each thread examines a specific text position and query pair, applying the same pre-filtering strategy used during counting.
     The counts buffer is then reused to track insertion positions within each work group's partition of the result buffer, allowing efficient parallel writing of validated matches.
