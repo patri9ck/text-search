@@ -523,6 +523,197 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     We did not parallelize rolling-hash-based implementations, since the inherent data dependencies in rolling hash computations complicate efficient task- or data-parallel execution.
     Consequently, we focus on parallelizing the candidate-based approaches.
 
+    \subsection{Using a Bitmask}
+    In the \texttt{candidate\_opencl\_v1} implementation, a single global bitmask is used to store all potential matches for all queries across the entire text.
+    Instead of separating candidate selection and validation into two kernels, each kernel invocation directly validates a single query at a single text position and writes the result to the corresponding bit in the mask (see \autoref{lst:candidateopenclv1}).
+    The candidate selection conditions are reused as a pre-filter within the kernel to reduce unnecessary full comparisons.
+
+    While this approach simplifies the kernel structure, it introduces several performance bottlenecks:
+    \begin{itemize}
+        \item The bitmask must be transferred between host and device memory.
+        Since the text itself already needs to be copied to the GPU, this additional transfer increases the overall data movement overhead.
+        \item Updates to the bitmask require atomic bitwise OR operations to avoid race conditions, which can significantly limit scalability.
+        \item After kernel execution, the entire bitmask must be unpacked to reconstruct the result vectors.
+        This post-processing step has unfavorable time complexity and can become costly for large inputs.
+    \end{itemize}
+
+    \begin{lstlisting}[language=C++, caption={OpenCL Kernel for the \texttt{candidate\_opencl\_v1} implementation (\texttt{candidate\_opencl\_v1\_text\_search.cpp}).}, label=lst:candidateopenclv1, float]
+__kernel void test_candidates(
+    __global uint *mask,
+    uint group_amount,
+    __global const char *text,
+    uint text_length,
+    __constant const char *flatten_queries,
+    __constant const uint *query_offsets,
+    __constant const uint *query_lengths
+) {
+    const uint i = get_global_id(0);
+    const uint j = get_global_id(1);
+    if (i >= text_length) {
+        return;
+    }
+    const uint query_offset = query_offsets[j];
+    const uint query_length = query_lengths[j];
+    if (i + query_length > text_length) {
+        return;
+    }
+    const uint k = get_local_id(0);
+    const uint l = get_group_id(0);
+    const uint mid = query_length >> 1;
+    const uint end = query_length - 1;
+    bool candidate = text[i] == flatten_queries[query_offset] &&
+                     text[i + mid] == flatten_queries[query_offset + mid] &&
+                     text[i + end] == flatten_queries[query_offset + end];
+    if (candidate) {
+        bool match = true;
+        for (uint m = 1; m < query_length - 1; ++m) {
+            if (m == mid) {
+                continue;
+            }
+            if (text[i + m] != flatten_queries[query_offset + m]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) {
+            atomic_or(&mask[(j * group_amount * 8) + (l * 8) + (k >> 5)], (uint)1 << (k & 31));
+        }
+    }
+}
+    \end{lstlisting}
+
+    \subsection{Two-Phase Approach}
+    To improve performance and better utilize GPU work groups, we employ a two-phase strategy for the \texttt{candidate\_opencl\_v2} implementation:
+    \begin{enumerate}
+        \item In the first phase, we count the number of candidate matches for each query within each work group.
+        This allows us to determine the exact size of the result buffer and the offsets for each work group's results.
+        \item In the second phase, candidates are validated and the confirmed matches are written into their designated positions within the shared result buffer.
+    \end{enumerate}
+
+    Both phases are implemented within a single kernel.
+    A mode variable is used to distinguish between counting and validation operations (see \autoref{lst:candidateopenclv2}).
+
+    Counting is performed per work group to minimize synchronization and reduce the need for atomic operations.
+
+    After counting, a single result buffer is allocated with partitions for each work group according to the counts computed in the first phase, and the counts buffer is reset on the GPU.
+
+    During validation, each thread examines a specific text position and query pair, applying the same pre-filtering strategy used during counting.
+    The counts buffer is then reused to track insertion positions within each work group's partition of the result buffer, allowing efficient parallel writing of validated matches.
+
+    \begin{lstlisting}[language=C++, caption={OpenCL Kernel for the \texttt{candidate\_opencl\_v2} implementation (\texttt{candidate\_opencl\_v2\_text\_search.cpp}).}, label=lst:candidateopenclv2, float]
+__kernel void count_and_test_candidates(
+    __global const char *text,
+    __global uint* counts,
+    __global uint* results,
+    uint text_length,
+    __constant const char *flatten_queries,
+    __constant const uint *query_offsets,
+    __constant const uint *query_lengths,
+    __global const uint *result_offsets,
+    uint mode
+) {
+    const size_t i = get_global_id(0);
+    const size_t j = get_global_id(1);
+
+    if (i >= text_length) {
+        return;
+    }
+    const uint query_offset = query_offsets[j];
+    const uint query_length = query_lengths[j];
+    if (i + query_length > text_length) {
+        return;
+    }
+    const uint mid = query_length >> 1;
+    const uint end = query_length - 1;
+    bool candidate = text[i] == flatten_queries[query_offset] &&
+                     text[i + mid] == flatten_queries[query_offset + mid] &&
+                     text[i + end] == flatten_queries[query_offset + end];
+    if (candidate) {
+        const uint index = j * get_num_groups(0) + get_group_id(0);
+        if (mode == 1) {
+            atomic_inc(&counts[index]);
+        } else {
+            bool match = true;
+            for (uint k = 1; k < query_length - 1; ++k) {
+                if (k == mid) {
+                    continue;
+                }
+                if (text[i + k] != flatten_queries[query_offset + k]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                uint count = atomic_inc(&counts[index]);
+
+                results[result_offsets[index] + count] = (uint)i;
+            }
+        }
+    }
+}
+    \end{lstlisting}
+
+    \subsection{Estimating the Candidates}
+    Instead of counting candidate matches on the GPU, we estimate the required size of the result buffer on the CPU beforehand in the \texttt{candidate\_opencl\_v3} implementation.
+    We employ a heuristic based on query length and typical character frequencies in English:
+    \begin{itemize}
+        \item For queries of length 1, we add 12.7\% of the text size, reflecting the frequency of the most common letter, \emph{e}~\cite{letter-frequency}.
+        \item For queries of length 2, we add 3.56\% of the text size, reflecting the frequency of the most common bigram, \emph{th}~\cite{bigram}.
+        \item For queries of length 3, we add 1.81\% of the text size, corresponding to the frequency of the most common trigram, \emph{the}~\cite{trigram}.
+        \item For longer queries, we add 0.1\% of the text size for each query.
+    \end{itemize}
+    Since this estimation may result in over-allocation, the final buffer size is halved to balance memory usage and the risk of overflow, and then capped at the maximum OpenCL buffer allocation size to ensure compatibility.
+
+    During kernel execution, we use a single global result buffer and a single global counter buffer.
+    The counter is atomically incremented by each thread to assign a unique position for each match in the result buffer.
+    Additionally, a second buffer stores the mapping from result indices to query indices, allowing reconstruction of which query produced each match.
+
+    If the allocated buffer proves insufficient during execution, excess matches are discarded to prevent buffer overflow.
+
+    \subsection{Evaluation}
+    As shown in \autoref{fig:queries-opencl} and \autoref{fig:books-opencl}, the bitmask approach exhibits the poorest performance due to its inherent bottlenecks, achieving an average speed-up of 433\% over its sequential equivalent.
+    The two-phase strategy demonstrates improved performance across all test cases, yielding an average speed-up of 545\%.
+
+    By employing a heuristic to estimate the required result buffer size, the \texttt{candidate\_opencl\_v3} implementation achieves significantly better performance with an average speed-up of 915\%.
+    However, this remains below the performance of the reference OpenMP implementation.
+
+    The heuristic proves sufficient for most real-world use cases and performs adequately even in our extreme test scenarios.
+    For applications involving exceptionally common queries where guaranteed correctness is critical, the \texttt{candidate\_opencl\_v2} implementation with its two-phase counting approach provides a more conservative alternative at the cost of reduced performance.
+
+    \begin{figure}[htb]
+        \centering
+        \begin{subfigure}[b]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{opencl-queries-common-words}
+            \subcaption{Common words.}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{opencl-queries-long-words}
+            \subcaption{Long words.}
+        \end{subfigure}
+        \caption{Runtime for OpenCL implementations for varying query counts (98 books).}
+        \label{fig:queries-opencl}
+    \end{figure}
+
+    \begin{figure}[htb]
+        \centering
+        \begin{subfigure}[b]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{opencl-books-common-words}
+            \subcaption{Common words.}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{opencl-books-long-words}
+            \subcaption{Long words.}
+        \end{subfigure}
+        \caption{Runtime for OpenCL implementations for varying book counts (100 queries).}
+        \label{fig:books-opencl}
+    \end{figure}
+
 
     \section{Parallelization Across Processes Using MPI}
 
