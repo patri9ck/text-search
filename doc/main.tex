@@ -758,9 +758,68 @@ __kernel void count_and_test_candidates(
     The actual match positions are then collected using \texttt{MPI\_Gatherv()} and combined on the master process to form the final result set~\cite{mpi}.
 
     \subsection{Evaluation}
+    According to \autoref{fig:queries-mpi} and \autoref{fig:books-mpi}, the MPI implementation exhibits strong performance, matching the efficiency of the best OpenMP (\texttt{std\_openmp}) and OpenCL (\texttt{candidate\_opencl\_v3}) implementations.
+
+    This corresponds to an average performance gain of 965\% over its sequential counterpart, the \texttt{candidate\_v3} implementation.
+
+    \begin{figure}[htb]
+        \centering
+        \begin{subfigure}[b]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{mpi-queries-common-words}
+            \subcaption{Common words.}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{mpi-queries-long-words}
+            \subcaption{Long words.}
+        \end{subfigure}
+        \caption{Runtime for OpenCL implementations for varying query counts (98 books, 20 processes).}
+        \label{fig:queries-mpi}
+    \end{figure}
+
+    \begin{figure}[htb]
+        \centering
+        \begin{subfigure}[b]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{mpi-books-common-words}
+            \subcaption{Common words.}
+        \end{subfigure}
+        \hfill
+        \begin{subfigure}[b]{0.49\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{mpi-books-long-words}
+            \subcaption{Long words.}
+        \end{subfigure}
+        \caption{Runtime for MPI implementations for varying book counts (100 queries, 20 processes).}
+        \label{fig:books-mpi}
+    \end{figure}
 
 
     \section{Conclusion}
+    This work presents a comprehensive evaluation of parallel text search algorithms across three distinct hardware architectures: multicore CPUs using OpenMP, GPUs using OpenCL, and distributed systems using MPI\@.
+
+    Our results demonstrate that effective parallelization can achieve speedups exceeding 1000\% compared to sequential baselines.
+    The OpenMP-based reference implementation (\texttt{std\_openmp}) delivers the best overall performance with minimal implementation effort, achieving a median runtime of 204 milliseconds and an average speedup of 1020\%.
+    This highlights that leveraging well-optimized standard library functions in conjunction with simple parallel constructs can outperform more complex custom implementations.
+
+    For GPU-based execution, the heuristic-driven approach (\texttt{candidate\_opencl\_v3}) achieves competitive performance with a speedup of 1228\%, demonstrating that careful buffer size estimation can eliminate costly GPU-CPU synchronization overhead while maintaining correctness for typical workloads.
+
+    The MPI implementation proves that the candidate-based algorithm scales effectively across distributed processes, achieving performance comparable to the best OpenMP and OpenCL variants with a speedup of 965\%.
+    This makes it well-suited for scenarios where the problem size exceeds the memory capacity of a single node.
+
+    A key insight from this work is the critical importance of memory access patterns and cache locality.
+    Algorithms that minimize cache thrashing and reduce main memory bandwidth requirements, such as \texttt{candidate\_v4} and \texttt{hash\_v2}, significantly outperform their counterparts that repeatedly traverse the input text.
+
+    For practical applications, we recommend the OpenMP-based reference implementation for its simplicity and excellent performance on modern multicore systems.
+    The OpenCL variant offers an alternative when dedicated GPU resources are available, though its performance does not exceed that of the OpenMP approach in our benchmarks.
+    The MPI implementation is suitable for large-scale distributed deployments or when the text size exceeds single-node memory limits.
+
+    Future work could explore hybrid approaches that combine multiple parallelization strategies.
+    For instance, the two-phase OpenCL approach could be enhanced by offloading the candidate counting phase to the CPU using OpenMP, potentially reducing GPU synchronization overhead.
+    Furthermore, an MPI-based implementation could distribute individual text files across processes, with each process executing a hybrid OpenCL-OpenMP pipeline locally.
+    This multi-layered approach would enable efficient exploitation of distributed memory systems, multicore CPUs, and GPUs simultaneously.
 
     \printbibliography
 
