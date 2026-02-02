@@ -8,7 +8,7 @@
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{subcaption}
-\usepackage[backend=biber,style=ieee]{biblatex}
+\usepackage[backend=biber, style=ieee]{biblatex}
 
 \addbibresource{main.bib}
 
@@ -44,7 +44,6 @@
         We further explore GPU-based parallelization using OpenCL, which reduces median execution time to 519 milliseconds, corresponding to a speed-up of 717\%.
         By applying heuristics to estimate the total number of matches, we further reduce median runtime to around 319 milliseconds, yielding a speed-up of 1228\% compared to the sequential baseline.
 
-
         In addition, we show how one algorithm can be parallelized across multiple processes using MPI to be distributed over different hosts, achieving a median execution time of 422 milliseconds and a speed-up of 1050\%.
         We also analyze the performance of all approaches when using 100 longer and less common query words.
 
@@ -70,13 +69,15 @@ find(const std::string &text, const std::vector<std::string> &queries)
 
 
     \section{Benchmarking}
-    For testing, we use a collection of up to 98 books from Project Gutenberg, which we concatenate into a single text containing over 82 million characters.
-    We perform queries using, at most, the 100 most common English words.
-    Since most of the 100 most common English words are very short, we additionally use a second query set consisting of randomly selected longer English words with lengths between 7 and 10 characters.
+    For testing, we use a collection of up to 98 books from Project Gutenberg~\cite{gutenberg}, which we concatenate into a single text containing over 82 million characters.
+    We perform queries using, at most, the 100 most common English words~\cite{common-words}.
+    Since most of the 100 most common English words are very short, we additionally use a second query set consisting of randomly selected longer English words with lengths between 7 and 10 characters\footnotemark.
+
+    \footnotetext{See \url{https://github.com/KN-PACO/text-search/blob/main/long-words.txt} for the list of long words.}
 
     Both the number of books and the number of queries can be varied to evaluate performance under different conditions.
 
-    Performance benchmarks were conducted on a system equipped with an Intel Core i5-14600K CPU (6 P-cores at 3.5 GHz and 8 E-cores at 2.6 GHz) and an AMD Radeon RX 7800 XT GPU, using GCC 15.2.1 for compilation.
+    Performance benchmarks were conducted on a system equipped with an Intel Core i5-14600K CPU (6 P-cores at 3.5 GHz and 8 E-cores at 2.6 GHz) and an AMD Radeon RX 7800 XT GPU, using GCC 15.2.0 for compilation.
     For each experiment, we report the median of 20 measurements.
 
 
@@ -426,18 +427,18 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     \end{figure}
 
 
-    \section{Parallelization Across CPU Cores Using OpenMP}
+    \section{Parallelization Across CPU Threads Using OpenMP}
     Having evaluated several sequential implementations, we now transition to parallelizing the most effective variants using OpenMP\@.
-    This includes the candidate selection and validation approaches, as well as the reference implementation.
+    This includes the best candidate selection and validation approaches, as well as the reference implementation.
     Additionally, we adapt the best-performing hash-based variant for parallel execution, which requires addressing its inherent data dependencies.
 
     \subsection{Candidate Selection and Validation}
-    We use the two best bitmask-based approaches, \texttt{candidate\_v3} and \texttt{candidate\_v4}, in the implementations \texttt{candidate\_openmp\_v1} and \texttt{candidate\_openmp\_v2}, respectively.
+    We use the two bitmask-based approaches, \texttt{candidate\_v3} and \texttt{candidate\_v4}, in the implementations \texttt{candidate\_openmp\_v1} and \texttt{candidate\_openmp\_v2}, respectively.
     The queries are distributed across all CPU threads for both the selection and validation phases.
 
     In the approach that creates a bitmask for each query, a separate bitmask is generated for every query, instead of creating a single bitmask once and reusing it for all queries.
     When using a single large bitmask for all queries, the bitwise OR must be replaced with its atomic counterpart to avoid race conditions.
-    OpenMP provides the directive \texttt{\#pragma omp atomic} for this purpose.
+    OpenMP provides the directive \texttt{\#pragma omp atomic} for this purpose~\cite{openmp}.
     This data dependency introduces a disadvantage compared to the per-query bitmask approach.
 
     For the validation phase, no synchronization is required, since each query maintains its own vector within the overall result vector.
@@ -446,11 +447,11 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
     The \texttt{hash\_openmp} implementation parallelizes \texttt{hash\_v2} by distributing independent query length groups across CPU threads.
     Parallelization is performed at the granularity of query groups sharing the same length, as only those can be processed together using a single rolling hash window.
 
-    Since OpenMP requires an integer index or a random access iterator for the \texttt{parallel for} directive, the \texttt{std::unordered\_map} used in the sequential version cannot be parallelized directly.
+    Since OpenMP requires an integer index or a random access iterator for the \texttt{parallel for} directive, the \texttt{std::unordered\_map} used in the sequential version cannot be parallelized directly~\cite{openmp}.
     Therefore, in a sequential preprocessing step, all query indices are stored in a vector and sorted by ascending query length.
     Based on this ordering, a second vector of metadata blocks is constructed, each storing a query length, the start position within the sorted index vector, and the number of queries in the group.
 
-    These blocks constitute independent work units and are processed in parallel using the OpenMP \texttt{parallel for} directive with dynamic scheduling.
+    These blocks constitute independent work units and are processed in parallel using the OpenMP \texttt{parallel for} directive with dynamic scheduling~\cite{openmp}.
     Dynamic scheduling improves load balancing, as the computational cost varies with query length and the number of candidate matches in the text.
 
     All auxiliary data structures required during the search phase, including the hash table mapping hash values to query indices, are allocated locally within the parallel region.
@@ -512,6 +513,15 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
 
 
     \section{Parallelization Across the GPU Using OpenCL}
+    All OpenCL implementations use a two-dimensional NDRange layout, where each work item processes one text position and one query.
+    Work items are grouped into workgroups of 256 threads~\cite{opencl}.
+    GPUs execute threads in fixed-size SIMD groups rather than individually.
+    On NVIDIA GPUs, these SIMD groups are called warps and consist of 32 threads, while on AMD GPUs the corresponding groups are called wavefronts and consist of 64 threads on GCN and CDNA architectures or 32/64 threads on newer RDNA architectures~\cite{amd-hip}.
+    Consequently, a workgroup of 256 threads corresponds to 8 warps on NVIDIA GPUs and 4 wavefronts on AMD GPUs. Choosing a workgroup size that is a
+    multiple of the hardware SIMD width is a common optimization practice and helps to efficiently utilize the GPU execution units~\cite{nvidia-opencl, amd-opencl}.
+
+    We did not parallelize rolling-hash-based implementations, since the inherent data dependencies in rolling hash computations complicate efficient task- or data-parallel execution.
+    Consequently, we focus on parallelizing the candidate-based approaches.
 
 
     \section{Parallelization Across Processes Using MPI}
