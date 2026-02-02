@@ -734,7 +734,9 @@ __kernel void count_and_test_candidates(
     Worker processes start with empty input and wait until the master distributes the data, ensuring that synchronization and data distribution are handled explicitly within the function.
 
     \subsection{Implementation}
-    In the \texttt{candidate\_mpi} implementation, based on the \texttt{candidate\_v3} approach, the input text is divided among all available processes, with each process receiving a contiguous segment.
+    In the \texttt{candidate\_mpi} implementation, based on the \texttt{candidate\_v3} approach, the input text is divided among all available MPI processes, with each process receiving a contiguous segment of the text.
+
+    Initially, the text length, the number of queries, and all query strings are distributed to all processes using \texttt{MPI\_Bcast()}.
 
     Let $m$ denote the length of the longest query.
     To ensure that matches spanning process boundaries are not missed, an overlap region of length $m-1$ is appended to all segments except the last one.
@@ -746,9 +748,14 @@ __kernel void count_and_test_candidates(
         \item The last process receives the remaining characters and does not require an additional overlap.
     \end{itemize}
 
-    The master process computes the segment sizes and displacements and distributes the text using \texttt{MPI\_Scatterv()}.
-    Each worker process searches within its extended segment, but only validates matches whose starting position lies within the original, non-overlapping base segment.
-    After local processing, the results are collected on the master process using \texttt{MPI\_Gather()} and \texttt{MPI\_Gatherv()}~\cite{mpi}.
+    All processes compute the segment sizes and displacements locally.
+    These values are used by the master process to distribute the text using \texttt{MPI\_Scatterv()}, while the worker processes use the same information to correctly interpret their received segments.
+
+    Each process searches within its extended local segment, including the overlap region.
+    To avoid duplicate matches, only candidates whose starting position lies within the original, non-overlapping base segment are validated and reported.
+
+    After local processing, each process sends the number of matches found per query to the master process using \texttt{MPI\_Gather()}.
+    The actual match positions are then collected using \texttt{MPI\_Gatherv()} and combined on the master process to form the final result set~\cite{mpi}.
 
     \subsection{Evaluation}
 
