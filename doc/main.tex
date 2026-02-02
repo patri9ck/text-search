@@ -47,7 +47,7 @@
         In addition, we show how one algorithm can be parallelized across multiple processes using MPI to be distributed over different hosts, achieving a median execution time of 422 milliseconds and a speed-up of 1050\%.
         We also analyze the performance of all approaches when using 100 longer and less common query words.
 
-        The source code is available at \url{https://github.com/KN-PACO/text-search/} in the \texttt{src/} directory.
+        The source code is available at \url{https://github.com/patri9ck/text-search/} in the \texttt{src/} directory.
         Build and usage instructions can be found in \texttt{README.md}.
     \end{abstract}
 
@@ -70,10 +70,10 @@ find(const std::string &text, const std::vector<std::string> &queries)
 
     \section{Benchmarking}
     For testing, we use a collection of up to 98 books from Project Gutenberg\footnotemark~\cite{gutenberg}, which we concatenate into a single text containing over 82 million characters.
-    \footnotetext{See \url{https://github.com/KN-PACO/text-search/tree/main/data} for all used books.}
+    \footnotetext{See \url{https://github.com/patri9ck/text-search/tree/main/data} for all used books.}
     We perform queries using, at most, the 100 most common English words~\cite{common-words}.
     Since most of the 100 most common English words are very short, we additionally use a second query set consisting of randomly selected longer English words with lengths between 7 and 10 characters\footnotemark.
-    \footnotetext{See \url{https://github.com/KN-PACO/text-search/blob/main/long-words.txt} for the list of long words.}
+    \footnotetext{See \url{https://github.com/patri9ck/text-search/blob/main/long-words.txt} for the list of long words.}
 
     Both the number of books and the number of queries can be varied to evaluate performance under different conditions.
 

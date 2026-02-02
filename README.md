@@ -17,9 +17,7 @@ choose **Modify**.
 
 To use OpenCL, the OpenCL SDK from Khronos is needed. It can be downloaded from
 the [official repository](https://github.com/KhronosGroup/OpenCL-SDK/releases).
-To make things easier, this repository already bundles binaries for the OpenCL SDK v2025.07.23 in the
-`bin/OpenCL-SDK-v2025.07.23-Win-x64/`
-directory. Later, when building the project, we can point CMake to this directory.
+Later, when building the project, we can point CMake to the SDK.
 
 For MPI, simply
 install [msmpisdk.msi and msmpisetup.exe](https://learn.microsoft.com/de-de/message-passing-interface/microsoft-mpi) to
@@ -42,13 +40,11 @@ cd text-search
 Finally, build the project using CMake:
 
 ```
-cmake -S . -B build -DOpenCL_ROOT="$pwd\bin\OpenCL-SDK-v2025.07.23-Win-x64"
+cmake -S . -B build -DOpenCL_ROOT="<path to opencl sdk>"
 cmake --build build --config Release
 ```
 
 This will create two executables in `build/Release/`, `text-search.exe` and `text-search-test.exe`.
-
-In case everything fails, we provide binaries in the `bin/` directory.
 
 ## Build Instructions for Linux
 
@@ -212,3 +208,6 @@ The repository already includes the top 100 from December 2025.
 
 - `candidate_opencl_v3`
   Consists of only one phase. The needed result buffer size is estimated before on the CPU using a heuristic.
+
+# License
+This project is licensed under [MIT](LICENSE).
