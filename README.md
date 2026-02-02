@@ -201,6 +201,7 @@ The repository already includes the top 100 from December 2025.
   Parallelization of `hash_v2` using OpenMP by distributing independent query length groups across CPU threads.
 
 - `candidate_mpi`
+  Parallelization of `candidate_v3` using MPI.
 
 - `candidate_opencl_v1`
   Parallelization of `candidate_v4` using OpenCL which validates directly instead of selecting candidates first.
