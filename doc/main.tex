@@ -513,8 +513,8 @@ find_hash_v2(const std::string &text, const std::vector<std::string> &queries) {
 
 
     \section{Parallelization Across the GPU Using OpenCL}
-    All OpenCL implementations use a two-dimensional NDRange layout, where each work item processes one text position and one query.
-    Work items are grouped into workgroups of 256 threads~\cite{opencl}.
+    All OpenCL implementations use a two-dimensional NDRange layout~\cite{opencl}, where each work item processes one text position and one query.
+    Work items are grouped into workgroups of 256 threads.
     GPUs execute threads in fixed-size SIMD groups rather than individually.
     On NVIDIA GPUs, these SIMD groups are called warps and consist of 32 threads, while on AMD GPUs the corresponding groups are called wavefronts and consist of 64 threads on GCN and CDNA architectures or 32/64 threads on newer RDNA architectures~\cite{amd-hip}.
     Consequently, a workgroup of 256 threads corresponds to 8 warps on NVIDIA GPUs and 4 wavefronts on AMD GPUs. Choosing a workgroup size that is a
